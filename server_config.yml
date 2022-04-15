@@ -1,8 +1,0 @@
-#Ports are to be added as Numbers
-Facade:
-  Port: 8081
-FHIR:
-  URL: 'http://localhost'
-  Port: 8080
-  #The Base has to include a start and an end '/'
-  Base: '/fhir/'

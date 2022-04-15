@@ -3,11 +3,14 @@
 #As well as a similar 'Subject' field with the relative Path to a necessary Patient Identifier
 Resources:
   Observation:
-    Date:
-    Subject:
-  Patient:
-    Date:
-    Subject:
+    Date: ""
+    Subject: ""
   Appointment:
-    Date:
-    Subject:
+    Date: ""
+    Subject: ""
+  Procedure:
+    Date: ""
+    Subject: ""
+  Patient:
+    Date: ""
+    Subject: ""

@@ -1,0 +1,10 @@
+version: '3.2'
+services:
+  fhir-facade:
+    container_name: "fhir-facade"
+    build: "./facade-app"
+    restart: unless-stopped
+    environment:
+      FHIR_SERVER_URL: ${FHIR_SERVER_URL}
+    ports: 
+      - "${FACADE_PORT}:${FACADE_PORT}"
