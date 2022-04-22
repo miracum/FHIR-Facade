@@ -1,0 +1,4 @@
+# SERVER_URL structure: https://{url}:{port}/{base}/
+# FHIR_SERVER_URL=
+
+FACADE_PORT=8082

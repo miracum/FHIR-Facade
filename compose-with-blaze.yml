@@ -1,4 +1,4 @@
-version: '3.2'
+version: '3.9'
 services:
   blaze:
     container_name: "blaze"
@@ -19,9 +19,5 @@ services:
       FACADE_PORT: ${FACADE_PORT}
     ports: 
       - "${FACADE_PORT}:${FACADE_PORT}"
-    depends_on:
-      - blaze
-    links:
-      - blaze
 volumes:
     blaze-data:
