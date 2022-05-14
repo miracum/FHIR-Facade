@@ -1,5 +1,0 @@
-pyyaml
-flask
-flask-restful
-uwsgi
-requests

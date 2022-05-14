@@ -1,23 +1,22 @@
 version: '3.9'
 services:
   blaze:
-    container_name: "blaze"
-    image: "samply/blaze:latest"
+    image: samply/blaze:latest
     restart: unless-stopped
     environment:
-      BASE_URL: "http://localhost:8080"
+      BASE_URL: http://localhost:8080
     ports:
-      - "8080:8080"
+      - ${BLAZE_PORT:-8080}:8080
     volumes:
-      - "blaze-data:/app/data"
+      - blaze-data:/app/data
   fhir-facade:
-    container_name: "fhir-facade"
-    build: "./facade-app"
+    build: ./facade_app
     restart: unless-stopped
     environment:
       FHIR_SERVER_URL: ${FHIR_SERVER_URL:-http://blaze:8080/fhir/}
-      FACADE_PORT: ${FACADE_PORT}
+      FACADE_PORT: ${FACADE_PORT:-8082}
     ports: 
-      - "${FACADE_PORT}:${FACADE_PORT}"
+      - ${FACADE_PORT:-8082}:8082
+    
 volumes:
     blaze-data:

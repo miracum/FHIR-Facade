@@ -1,0 +1,1 @@
+./blazectl --server ${FHIR_SERVER_URL:-http://localhost:8080/fhir/} upload ./testData
