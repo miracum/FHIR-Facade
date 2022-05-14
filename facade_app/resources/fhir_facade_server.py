@@ -1,6 +1,6 @@
 import yaml, requests, os
 from flask import Flask, request
-from flask_restful import reqparse, abort, Api, Resource
+from flask_restful import Resource
 
 with open(f'../config/resource_config.yml') as cfgfile:
     resource_config = yaml.safe_load(cfgfile)
@@ -32,42 +32,38 @@ def getConsentParams(type):
     #return filtered results
 
 def getAllConsents(SERVER_URL):
-    return []
+    return [SERVER_URL]
 
 class FHIR_Facade_Server(Resource):
 
-    def get(self, type):
+    def get(self, resource):
         SERVER_URL = os.environ['FHIR_SERVER_URL']
 
         if(type in resource_config['Resources']):
             ALL_CONSENTS = getAllConsents(SERVER_URL)
             s = requests.session()
             params = request.args.copy()
-            params.update(getConsentParams(type))
-            response = s.get(SERVER_URL + type, params=params, headers=request.headers)
+            params.update(getConsentParams(resource))
+            response = s.get(SERVER_URL + resource, params=params, headers=request.headers)
             return response.json()
         else:
-            s = requests.session()
-            response = s.get(SERVER_URL + request.full_path[len('/fhir/'):-1], headers=request.headers)
-            return response.json()
+            return f"The requested resource has not been configured. Please add the necessary configuration.\nOr if you dont require consent for the requested resources, use the fhir-server endpoint ({SERVER_URL}) directly."
 
-    def post(self, type, search='false'):
+    def post(self, resource, search='false'):
         SERVER_URL = os.environ['FHIR_SERVER_URL']
 
         if(search == '_search'):
-            tempConsentQuery = getConsentParams(type)
+            tempConsentQuery = getConsentParams(resource)
             params = request.args.copy()
 
-            if (type in resource_config['Resources']):
+            if (resource in resource_config['Resources']):
                 ALL_CONSENTS = getAllConsents(SERVER_URL)
                 s = requests.session()
 
                 params.update(tempConsentQuery)
-                response = s.post(SERVER_URL + type, data=params)
+                response = s.post(SERVER_URL + resource, data=params)
                 return response.json()
             else:
-                s = requests.session()
-                response = s.post(SERVER_URL + type, data=params)
-                return response.json()
+                return f"The requested resource has not been configured. Please add the necessary configuration.\nOr if you dont require consent for the requested resources, use the fhir-server endpoint ({SERVER_URL}) directly."
         else:
-            return 'syntax error'
+            return 'Syntax error. Use the appropriate fhir-post-search syntax: .../fhir/type/_search'

@@ -7,13 +7,11 @@ app = Flask(__name__)
 api = Api(app)
 
 # Read config file
-with open(f'./info.yml') as infofile:
+with open('./info.yml') as infofile:
     info = yaml.safe_load(infofile)
 
 VERSION = info['Version']
 
 # set up web server at FACADE_URL+FACADE_PORT
-api.add_resource(FHIR_Facade_Server, '/fhir/<string:type>', '/fhir/<string:type>/<string:search>')
+api.add_resource(FHIR_Facade_Server, '/fhir/<string:resource>', '/fhir/<string:resource>/<string:search>')
 
-if(__name__=='__main__'):
-    app.run()
