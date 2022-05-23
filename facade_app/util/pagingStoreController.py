@@ -4,7 +4,8 @@ def storePage(page, pageId):
     try:
         with open(f"./pages/{pageId}",'w') as outFile:
             json.dump(page, outFile, indent="")
-    except:
+    except IOError:
+        print(IOError)
         return f"Error writing page with ID {pageId}", 403
 
 def getPage(pageId):

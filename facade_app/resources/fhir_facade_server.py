@@ -85,9 +85,6 @@ class FHIR_Facade_Server(Resource):
                 
                 storePage(curr_page, curr_page["id"]) 
 
-            print(len(matched_resources))
-            print(matched_resources)
-
             clearPages(page_store_time)
 
             if(len(page_id_list)!=0):
