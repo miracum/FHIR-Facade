@@ -10,7 +10,8 @@ def getAllConsents(SERVER_URL):
     #Initial request and processing
     s = requests.session()
     response = s.get(SERVER_URL + "Consent", verify=False).json()#,params={"_format": "application/fhir+json"})
-    raw_consents = [entry["resource"] for entry in response["entry"]]
+    if("entry" in response.keys()):
+        raw_consents = [entry["resource"] for entry in response["entry"]]
 
     #Iterate over potential paged responses
     while("next" in [link["relation"] for link in response["link"]]):
@@ -60,7 +61,8 @@ def getProvisionTimeSet(consents, provision_config):
 
             provision_coding = provision["code"][0]["coding"][0]
             
-            if(provision_coding in conf_prov_codes):
+            #check whether configured provisions are a subset of the consent provisions
+            if(True in [(all(provision_coding.get(key, None) == val for key, val in config_code.items())) for config_code in conf_prov_codes]):
                 
                 try:
                     temp = provision_time_set[patient]

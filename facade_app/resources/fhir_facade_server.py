@@ -39,14 +39,16 @@ class FHIR_Facade_Server(Resource):
             page_size = int(os.environ["PAGE_SIZE"])
             page_store_time = int(os.environ["PAGE_STORE_TIME"])
             raw_resources = []
+            matched_resources = []
             page_id_list = []
 
             #get initial resources from fhir server
             s = requests.session()
             
             response = s.get(SERVER_URL + resource, params=params, headers=request.headers, verify=False).json()
-            raw_resources = response["entry"]
-            matched_resources = matchResourcesWithConsents(resources=raw_resources,consents=all_consents,resource_config=RESOURCE_PATHS[resource], provision_config=prov_conf)
+            if("entry" in response.keys()):
+                raw_resources = response["entry"]
+                matched_resources = matchResourcesWithConsents(resources=raw_resources,consents=all_consents,resource_config=RESOURCE_PATHS[resource], provision_config=prov_conf)
 
             #Iterate over potential paged responses
             while("next" in [link["relation"] for link in response["link"]]):
@@ -123,6 +125,7 @@ class FHIR_Facade_Server(Resource):
                 all_consents = getAllConsents(SERVER_URL)
                 page_size = int(os.environ["PAGE_SIZE"])
                 page_store_time = int(os.environ["PAGE_STORE_TIME"])
+                matched_resources = []
                 raw_resources = []
                 page_id_list = []
 
@@ -143,8 +146,9 @@ class FHIR_Facade_Server(Resource):
                     print("no provision config, defaulting to config/general_provision_config.json")
 
                 response = s.post(SERVER_URL + resource + '/_search', params=data, verify=False).json()
-                raw_resources = response["entry"]
-                matched_resources = matchResourcesWithConsents(resources=raw_resources,consents=all_consents,resource_config=RESOURCE_PATHS[resource], provision_config=prov_conf)
+                if("entry" in response.keys()):
+                    raw_resources = response["entry"]
+                    matched_resources = matchResourcesWithConsents(resources=raw_resources,consents=all_consents,resource_config=RESOURCE_PATHS[resource], provision_config=prov_conf)
 
                 #Iterate over potential paged responses
                 while("next" in [link["relation"] for link in response["link"]]):

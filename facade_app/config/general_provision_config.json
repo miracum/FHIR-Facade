@@ -4,8 +4,7 @@
             "coding":  [
                 {
                     "system": "urn:oid:2.16.840.1.113883.3.1937.777.24.5.3",
-                    "code": "2.16.840.1.113883.3.1937.777.24.5.3.8",
-                    "display": "MDAT_wissenschaftlich_nutzen_EU_DSGVO_NIVEAU"
+                    "code": "2.16.840.1.113883.3.1937.777.24.5.3.8"
                 }
             ]
         }
