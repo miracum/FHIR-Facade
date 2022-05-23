@@ -31,3 +31,34 @@ Use the uploadTestData.sh script to upload testdata to blaze
 All Data was randomly generated with [SyntheaTM](https://github.com/synthetichealth/synthea) and manually modified to include Consent (and its dependent) Resources based on the [MII Kerndatensatz](https://simplifier.net/packages/de.medizininformatikinitiative.kerndatensatz.consent/1.0.0-ballot1).
 
 Both variants expose the facade-endpoint on :8082/fhir/ unless configured otherwise
+
+## Provision Configuration
+Provisions can be configured either before container startup in the general_provison_config.json or during runtime:
+Pass a dictionary of provision codes based on the [MII Kerndatensatz](https://simplifier.net/packages/de.medizininformatikinitiative.kerndatensatz.consent/1.0.0-ballot1).
+
+<code>
+{
+    "code":  [
+        {
+            "coding":  [
+                {
+                    "system": "urn:oid:2.16.840.1.113883.3.1937.777.24.5.3",
+                    "code": "2.16.840.1.113883.3.1937.777.24.5.3.8",
+                    "display": "MDAT_wissenschaftlich_nutzen_EU_DSGVO_NIVEAU"
+                }
+            ]
+        }
+    ]
+    "code":  [
+        {
+            "coding":  [
+                {
+                    "system": "urn:oid:2.16.840.1.113883.3.1937.777.24.5.3",
+                    "code": "2.16.840.1.113883.3.1937.777.24.5.3.5",
+                    "display": "MDAT_Erheben"
+                }
+            ]
+        }
+    ]
+}
+</code>
