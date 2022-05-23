@@ -1,16 +1,24 @@
 #Add all resources that are supposed to be limited by consent status
 #This must include a 'Date' Attribute with a relative Path from the Resource to a necessary Date field including its name
 #As well as a similar 'Subject' field with the relative Path to a necessary Patient Identifier
+#Paths are represented as follows: path/to/the/subject/field
 Resources:
   Observation:
+    Date: "issued"
+    Subject: "subject/reference"
+  Encounter:
     Date: ""
-    Subject: ""
-  Appointment:
-    Date: ""
-    Subject: ""
+    Subject: "subject/reference"
   Procedure:
-    Date: ""
-    Subject: ""
+    Date: "performedPeriod/"
+    Subject: "subject/reference"
   Patient:
     Date: ""
-    Subject: ""
+    Subject: "id"
+  Consent: 
+    Date: "dateTime"
+    Subject: "patient/reference"
+  
+#Relative path to provisions from consent
+Provisions:
+  Path: "provision/provision"

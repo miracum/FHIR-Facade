@@ -8,6 +8,8 @@
 |-------------------------------|:-----------------------------:|:-----------------------------:|:-----------------------------:|
 | FACADE_PORT | 8082 | Port on which the Fhir-Facade is available | |
 | FHIR_SERVER_URL               | http://localhost:8080/fhir/   | | |
+| PAGE_SIZE | 50 | Number of entries per result page | |
+| PAGE_STORE_TIME | 1200 | Seconds after which queried pages are discarded | |
 
 ### Standalone Deployment
 

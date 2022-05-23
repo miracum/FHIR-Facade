@@ -7,13 +7,15 @@ RUN pip3 install -r requirements.txt
 
 COPY . .
 
-ENV FHIR_SERVER_URL=${FHIR_SERVER_URL:-http://localhost:8080/fhir/}
+ENV FHIR_SERVER_URL=${FHIR_SERVER_URL:-http://host.docker.internal:8080/fhir/}
 ENV FACADE_PORT=${FACADE_PORT:-8082}
+ENV PAGE_SIZE=${PAGE_SIZE:-50}
+ENV PAGE_STORE_TIME=${PAGE_STORE_TIME:-1200}
 
 RUN openssl genrsa -out foobar.key 2048
 RUN openssl req -new -key foobar.key -out foobar.csr -subj "/C=GB/ST=London/L=London/O=Global Security/OU=IT Department/CN=example.com"
 RUN openssl x509 -req -days 365 -in foobar.csr -signkey foobar.key -out foobar.crt
 
-EXPOSE ${FACADE_PORT:-8082}
+EXPOSE ${FACADE_PORT}
 
 CMD ["uwsgi", "wsgi.ini"]
