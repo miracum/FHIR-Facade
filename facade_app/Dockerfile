@@ -19,7 +19,7 @@ ENV USER_UID=1111
 RUN mkdir -p /data/ssl && \
     chown -R ${USER_UID}:${USER_UID} /data
 
-USER 1111
+USER ${USER_UID}:${USER_UID}
 
 RUN openssl genrsa -out /data/ssl/foobar.key 2048
 RUN openssl req -new -key /data/ssl/foobar.key -out /data/ssl/foobar.csr -subj "/C=GB/ST=London/L=London/O=Global Security/OU=IT Department/CN=example.com"
@@ -27,5 +27,4 @@ RUN openssl x509 -req -days 365 -in /data/ssl/foobar.csr -signkey /data/ssl/foob
 
 EXPOSE ${FACADE_PORT}
 
-USER ${USER_UID}:${USER_UID}
 CMD ["uwsgi", "wsgi.ini"]
