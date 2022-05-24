@@ -14,6 +14,7 @@
 | PAGING_STORE | LOCAL | Use local storage or MongoDb for paging | Valid values: LOCAL / MONGO |
 | MONGO_DB_URL | mongodb://host.docker.internal:27017 | MongoDB Connection String | |
 
+
 ### Standalone Deployment
 
 In order to run the standalone facade from the cloned repository simply run: 
