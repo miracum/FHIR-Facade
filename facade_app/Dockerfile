@@ -19,9 +19,11 @@ ENV USER_UID=1111
 RUN mkdir -p /data/ssl && \
     chown -R ${USER_UID}:${USER_UID} /data
 
-RUN openssl genrsa -out foobar.key 2048
+USER 1111
+
+RUN openssl genrsa -out /data/ssl/foobar.key 2048
 RUN openssl req -new -key /data/ssl/foobar.key -out /data/ssl/foobar.csr -subj "/C=GB/ST=London/L=London/O=Global Security/OU=IT Department/CN=example.com"
-RUN openssl x509 -req -days 365 -in foobar.csr -signkey foobar.key -out foobar.crt
+RUN openssl x509 -req -days 365 -in /data/ssl/foobar.csr -signkey /data/ssl/foobar.key -out /data/ssl/foobar.crt
 
 EXPOSE ${FACADE_PORT}
 
