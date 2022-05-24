@@ -5,3 +5,4 @@ uwsgi
 python-dateutil
 requests
 shortuuid
+pymongo

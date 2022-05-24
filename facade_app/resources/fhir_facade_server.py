@@ -21,10 +21,14 @@ class FHIR_Facade_Server(Resource):
         SERVER_URL = os.environ['FHIR_SERVER_URL']
         try:
             prov_conf = json.loads(params["provision_config"])
+            if(prov_conf =={} or not "code" in prov_conf.keys() or not "coding" in prov_conf["code"][0]):
+                with open('../config/general_provision_config.json') as cfgfile:
+                    prov_conf = json.loads(cfgfile.read())
+                print("invalid provision_config, defaulting to config/general_provision_config.json")
         except:
             with open('../config/general_provision_config.json') as cfgfile:
                 prov_conf = json.loads(cfgfile.read())
-            print("no provision config, defaulting to config/general_provision_config.json")
+            print("no provision_config provided, defaulting to config/general_provision_config.json")
 
         if(resource == "Page" and "__page-id" in params):
             return getPage(params["__page-id"])
@@ -83,7 +87,7 @@ class FHIR_Facade_Server(Resource):
                                             lastPage=(i+1 == num_of_pages))
                 page_id_list.append(curr_page["id"])
                 
-                storePage(curr_page, curr_page["id"]) 
+                storePage(curr_page, curr_page["id"], page_store_time) 
 
             clearPages(page_store_time)
 
@@ -117,7 +121,7 @@ class FHIR_Facade_Server(Resource):
                 #Check if resource has been configured properly
                 if(RESOURCE_PATHS[resource]["Date"]=="" or RESOURCE_PATHS[resource]["Subject"]==""):
                     return f"The requested resource has not been configured. Please add the necessary configuration. Or if you dont require consent for the requested resources, use the fhir-server endpoint ({SERVER_URL}) directly.", 403
-
+                
                 #refreshAllConsents
                 all_consents = getAllConsents(SERVER_URL)
                 page_size = int(os.environ["PAGE_SIZE"])
@@ -137,10 +141,14 @@ class FHIR_Facade_Server(Resource):
 
                 try:
                     prov_conf = json.loads(data["provision_config"])
+                    if(prov_conf =={} or not "code" in prov_conf.keys() or not "coding" in prov_conf["code"][0]):
+                        with open('../config/general_provision_config.json') as cfgfile:
+                            prov_conf = json.loads(cfgfile.read())
+                        print("invalid provision_config, defaulting to config/general_provision_config.json")
                 except:
                     with open('../config/general_provision_config.json') as cfgfile:
                         prov_conf = json.loads(cfgfile.read())
-                    print("no provision config, defaulting to config/general_provision_config.json")
+                    print("no provision_config provided, defaulting to config/general_provision_config.json")
 
                 response = s.post(SERVER_URL + resource + '/_search', params=data, verify=False).json()
                 if("entry" in response.keys()):
@@ -180,7 +188,7 @@ class FHIR_Facade_Server(Resource):
                                                 lastPage=(i+1 == num_of_pages))
                     page_id_list.append(curr_page["id"])
                     
-                    storePage(curr_page, curr_page["id"]) 
+                    storePage(curr_page, curr_page["id"], page_store_time) 
 
                 clearPages(page_store_time)
 

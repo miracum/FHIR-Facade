@@ -7,15 +7,19 @@
 | Variable                      | Default                       | Function                      | Comment                       |
 |-------------------------------|:-----------------------------:|:-----------------------------:|:-----------------------------:|
 | FACADE_PORT | 8082 | Port on which the Fhir-Facade is available | |
-| FHIR_SERVER_URL               | http://localhost:8080/fhir/   | | |
+| FHIR_SERVER_URL               | http://host.docker.internal:8080/fhir/   | | |
 | PAGE_SIZE | 50 | Number of entries per result page | |
 | PAGE_STORE_TIME | 1200 | Seconds after which queried pages are discarded | |
+| PAGING_STORE | LOCAL | Use local storage or MongoDb for paging | Valid values: LOCAL / MONGO |
+| MONGO_DB_URL | mongodb://host.docker.internal:27017 | MongoDB Connection String | |
 
 ### Standalone Deployment
 
-In order to run the standalone facade simply run: 
+In order to run the standalone facade from the cloned repository simply run: 
 
 `docker compose up`
+
+Or pull the build image from [dockerhub](https://hub.docker.com/repository/docker/boehmdo/fhir-facade)
 
 ### Test Deployment
 
@@ -38,27 +42,50 @@ Pass a dictionary of provision codes based on the [MII Kerndatensatz](https://si
 
 <code>
 {
+
     "code":  [
+
         {
+
             "coding":  [
+
                 {
+
                     "system": "urn:oid:2.16.840.1.113883.3.1937.777.24.5.3",
+
                     "code": "2.16.840.1.113883.3.1937.777.24.5.3.8",
+
                     "display": "MDAT_wissenschaftlich_nutzen_EU_DSGVO_NIVEAU"
+
                 }
+
             ]
+
         }
+
     ]
+
     "code":  [
+
         {
+
             "coding":  [
+
                 {
+
                     "system": "urn:oid:2.16.840.1.113883.3.1937.777.24.5.3",
+
                     "code": "2.16.840.1.113883.3.1937.777.24.5.3.5",
+
                     "display": "MDAT_Erheben"
+
                 }
+
             ]
+
         }
+
     ]
+
 }
 </code>

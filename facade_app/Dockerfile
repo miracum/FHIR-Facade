@@ -11,6 +11,9 @@ ENV FHIR_SERVER_URL=${FHIR_SERVER_URL:-http://host.docker.internal:8080/fhir/}
 ENV FACADE_PORT=${FACADE_PORT:-8082}
 ENV PAGE_SIZE=${PAGE_SIZE:-50}
 ENV PAGE_STORE_TIME=${PAGE_STORE_TIME:-1200}
+ENV PAGING_STORE=${PAGING_STORE:-LOCAL}
+ENV MONGO_DB_URL=${MONGO_DB_URL:-mongodb://host.docker.internal:27017}
+
 
 RUN openssl genrsa -out foobar.key 2048
 RUN openssl req -new -key foobar.key -out foobar.csr -subj "/C=GB/ST=London/L=London/O=Global Security/OU=IT Department/CN=example.com"

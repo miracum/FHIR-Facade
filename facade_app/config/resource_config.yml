@@ -7,13 +7,13 @@ Resources:
     Date: "issued"
     Subject: "subject/reference"
   Encounter:
-    Date: ""
+    Date: "period/start"
     Subject: "subject/reference"
   Procedure:
     Date: "performedPeriod/"
     Subject: "subject/reference"
   Patient:
-    Date: ""
+    Date: "meta/lastUpdated"
     Subject: "id"
   Consent: 
     Date: "dateTime"
