@@ -10,6 +10,7 @@
 | FHIR_SERVER_URL               | http://host.docker.internal:8080/fhir/   | | |
 | PAGE_SIZE | 50 | Number of entries per result page | |
 | PAGE_STORE_TIME | 1200 | Seconds after which queried pages are discarded | |
+| INTERNAL_PAGE_SIZE | 2000 | Number of loaded resources, before internal paging is used||
 | PAGING_STORE | LOCAL | Use local storage or MongoDb for paging | Valid values: LOCAL / MONGO |
 | MONGO_DB_URL | mongodb://host.docker.internal:27017 | MongoDB Connection String | |
 
