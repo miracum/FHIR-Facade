@@ -100,7 +100,7 @@ class FHIR_Facade_Server(Resource):
                                     page_store_time=page_store_time,
                                     facade_url=f"https://localhost:{(os.environ['FACADE_PORT'])}/fhir/",
                                     lastPage=True)
-                storePage(emptySearchPage, emptySearchPage["id"])
+                storePage(emptySearchPage, emptySearchPage["id"], page_store_time)
                 return emptySearchPage
 
         else:
@@ -201,7 +201,7 @@ class FHIR_Facade_Server(Resource):
                                         page_store_time=page_store_time,
                                         facade_url=f"https://localhost:{(os.environ['FACADE_PORT'])}/fhir/",
                                         lastPage=True)
-                    storePage(emptySearchPage, emptySearchPage["id"])
+                    storePage(emptySearchPage, emptySearchPage["id"], page_store_time)
                     return emptySearchPage
 
             else:

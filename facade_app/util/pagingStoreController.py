@@ -2,7 +2,7 @@ import json, os, datetime
 from pymongo import MongoClient
 import pymongo
 
-def connectToMongo(page_store_time=1200):
+def connectToMongoPaging(page_store_time=1200):
     
     # Provide the mongodb atlas url to connect python to mongodb using pymongo
     CONNECTION_STRING = os.environ["MONGO_DB_URL"]
@@ -19,9 +19,9 @@ def connectToMongo(page_store_time=1200):
         col = db['Pages']
     return col
 
-def storePage(page, page_id, page_store_time):
+def storePage(page, page_id, page_store_time=1200):
     if(os.environ["PAGING_STORE"]=="MONGO"):
-        db = connectToMongo(page_store_time)
+        db = connectToMongoPaging(page_store_time)
         db.insert_one({"_id":page_id,"date":datetime.datetime.now(),"page":page})
     else:
         try:
@@ -31,10 +31,12 @@ def storePage(page, page_id, page_store_time):
             print(IOError)
             return f"Error writing page with ID {page_id}", 403
 
-def getPage(page_id):
+def getPage(page_id, remove=False):
     if(os.environ["PAGING_STORE"]=="MONGO"):
-        db = connectToMongo()
-        return db.find_one({'_id':page_id})["page"]
+        db = connectToMongoPaging()
+        result = db.find_one({'_id':page_id})["page"]
+        if(remove): db.delete_one({'_id':page_id})
+        return result
     else:
         try:
             with open(f"./pages/{page_id}",'r') as inFile:

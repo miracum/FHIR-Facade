@@ -18,3 +18,10 @@ def fhirBundlifyList(list, total, facade_url, page_store_time, page_size, uid=""
         "total":total,
         "resourceType":"Bundle"
     }, nextUuid
+
+def internalPagifyList(list):
+    uid = shortuuid.encode(uuid.uuid4())
+    return {
+        "id":uid,
+        "entry":list
+    }
