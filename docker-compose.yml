@@ -5,4 +5,4 @@ services:
     build: ./facade-app
     restart: unless-stopped
     ports: 
-      - ${FACADE_PORT:-8082}:8082
+      - ${FACADE_PORT:-8082}:${FACADE_PORT:-8082}
