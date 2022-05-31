@@ -1,4 +1,5 @@
 import yaml, json, requests, os, math
+from requests.auth import HTTPBasicAuth
 from flask import Flask, request
 from flask_restful import Resource
 from util.consentAndResourceUtil import getAllConsents, matchResourcesWithConsents
@@ -13,6 +14,7 @@ with open('../config/resource_config.yml') as cfgfile:
     resource_config = yaml.safe_load(cfgfile)
 
 RESOURCE_PATHS = resource_config['Resources']
+LOG_LEVEL = os.environ("LOG_LEVEL")
 
 class FHIR_Facade_Server(Resource):
 
@@ -48,8 +50,10 @@ class FHIR_Facade_Server(Resource):
 
             #get initial resources from fhir server
             s = requests.session()
+            auth=HTTPBasicAuth(os.getenv("BA_USER_NAME",""),os.getenv("BA_PASSWORD",""))
             
-            response = s.get(SERVER_URL + resource, params=params, headers=request.headers, verify=False).json()
+            response = s.get(SERVER_URL + resource, auth=auth, params=params, headers=request.headers, verify=False).json()
+            if(LOG_LEVEL=="DEBUG"): print(f"initial response: {response}")
             if("entry" in response.keys()):
                 raw_resources = response["entry"]
                 matched_resources = matchResourcesWithConsents(resources=raw_resources,consents=all_consents,resource_config=RESOURCE_PATHS[resource], provision_config=prov_conf)
@@ -60,7 +64,8 @@ class FHIR_Facade_Server(Resource):
                 link_index = [link["relation"] for link in response["link"]].index("next")
                 corrected_url = SERVER_URL + response["link"][link_index]["url"].split("/fhir/")[1]
 
-                response = s.get(corrected_url, verify=False).json()
+                response = s.get(corrected_url, auth=auth, verify=False).json()
+                if(LOG_LEVEL=="DEBUG"): print(f"paged response: {response}")
 
                 #Extract entries and relevant fields
                 raw_resources = response["entry"]
@@ -132,6 +137,8 @@ class FHIR_Facade_Server(Resource):
 
                 #get initial resources from fhir server
                 s = requests.session()
+                auth=HTTPBasicAuth(os.getenv("BA_USER_NAME",""),os.getenv("BA_PASSWORD",""))
+
                 try:
                     data = json.loads(request.data)
                     data.update(params)
@@ -150,7 +157,8 @@ class FHIR_Facade_Server(Resource):
                         prov_conf = json.loads(cfgfile.read())
                     print("no provision_config provided, defaulting to config/general_provision_config.json")
 
-                response = s.post(SERVER_URL + resource + '/_search', params=data, verify=False).json()
+                response = s.post(SERVER_URL + resource + '/_search', auth=auth, params=data, verify=False).json()
+                if(LOG_LEVEL=="DEBUG"): print(f"initial response: {response}")
                 if("entry" in response.keys()):
                     raw_resources = response["entry"]
                     matched_resources = matchResourcesWithConsents(resources=raw_resources,consents=all_consents,resource_config=RESOURCE_PATHS[resource], provision_config=prov_conf)
@@ -161,7 +169,8 @@ class FHIR_Facade_Server(Resource):
                     link_index = [link["relation"] for link in response["link"]].index("next")
                     corrected_url = SERVER_URL + response["link"][link_index]["url"].split("/fhir/")[1]
 
-                    response = s.get(corrected_url, verify=False).json()
+                    response = s.get(corrected_url, auth=auth, verify=False).json()
+                    if(LOG_LEVEL=="DEBUG"): print(f"paged response: {response}")
 
                     #Extract entries and relevant fields
                     raw_resources = response["entry"]

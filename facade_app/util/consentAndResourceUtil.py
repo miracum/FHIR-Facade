@@ -1,6 +1,9 @@
 from dateutil import parser 
 from unittest import result
-import requests
+import requests, os
+from requests.auth import HTTPBasicAuth
+
+LOG_LEVEL = os.environ["LOG_LEVEL"]
 
 def getAllConsents(SERVER_URL):
 
@@ -9,7 +12,11 @@ def getAllConsents(SERVER_URL):
 
     #Initial request and processing
     s = requests.session()
-    response = s.get(SERVER_URL + "Consent", verify=False).json()#,params={"_format": "application/fhir+json"})
+    auth=HTTPBasicAuth(os.getenv("BA_USER_NAME",""),os.getenv("BA_PASSWORD",""))
+    response = s.get(SERVER_URL + "Consent", auth=auth, verify=False).json()
+
+    if(LOG_LEVEL=="DEBUG"): print(f"Initial consent response: {response}")
+    
     if("entry" in response.keys()):
         raw_consents = [entry["resource"] for entry in response["entry"]]
 
@@ -19,7 +26,7 @@ def getAllConsents(SERVER_URL):
         link_index = [link["relation"] for link in response["link"]].index("next")
         corrected_url = SERVER_URL + response["link"][link_index]["url"].split("/fhir/")[1]
 
-        response = s.get(corrected_url, verify=False)
+        response = s.get(corrected_url, auth=auth, verify=False)
 
         #Extract entries and relevant fields
         raw_consents = raw_consents + [entry["resource"] for entry in response["entry"]]
@@ -51,7 +58,7 @@ def filterConsents(consents):
 
 def getProvisionTimeSet(consents, provision_config):
     provision_time_set = {}
-    conf_prov_codes = [code[0] for code in [provision["coding"] for provision in provision_config["code"]]]
+    conf_prov_codes = provision_config["coding"]
 
     for consent in consents:
 
@@ -77,6 +84,7 @@ def getProvisionTimeSet(consents, provision_config):
 def matchResourcesWithConsents(resources, consents, resource_config, provision_config):
     
     provision_time_set = getProvisionTimeSet(consents, provision_config)
+    if(LOG_LEVEL=="DEBUG"): print(f"provision_time_set:{provision_time_set}")
 
     consented_resources = []
 
