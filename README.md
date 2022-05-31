@@ -7,7 +7,7 @@
 | Variable                      | Default                       | Function                      | Comment                       |
 |-------------------------------|:-----------------------------:|:-----------------------------:|:-----------------------------:|
 | FACADE_PORT | 8082 | Port on which the Fhir-Facade is available | |
-| FHIR_SERVER_URL               | http://host.docker.internal:8080/fhir/   | | |
+| FHIR_SERVER_URL | http://host.docker.internal:8080/fhir/   | | |
 | PAGE_SIZE | 50 | Number of entries per result page | |
 | PAGE_STORE_TIME | 1200 | Seconds after which queried pages are discarded | |
 | INTERNAL_PAGE_SIZE | 2000 | Number of loaded resources, before internal paging is used||
@@ -60,7 +60,7 @@ Resources:
 ### Provision Configuration
 Provisions can be configured either before container startup in the config/general_provison_config.json or during runtime:
 Pass a List of provision codes in a json format based on the [MII Kerndatensatz](https://simplifier.net/packages/de.medizininformatikinitiative.kerndatensatz.consent/1.0.0-ballot1).
-Every Consent is required to have ALL provided provisions as a subset of its provision. This structure is required for the preconfiguration as well as the parameter version.
+Every Consent is required to have ALL provided provisions as a subset of its provisions. This structure is required for the preconfiguration as well as the parameter version.
 
 #### Example:
 ```
@@ -69,6 +69,10 @@ Every Consent is required to have ALL provided provisions as a subset of its pro
         {
             "system": "urn:oid:2.16.840.1.113883.3.1937.777.24.5.3",
             "code": "2.16.840.1.113883.3.1937.777.24.5.3.8"
+        },
+        {
+            "system": "urn:oid:2.16.840.1.113883.3.1937.777.24.5.3",
+            "code": "2.16.840.1.113883.3.1937.777.24.5.3.5"
         }
     ]   
 }

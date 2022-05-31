@@ -18,7 +18,3 @@ Resources:
   Consent: 
     Date: "dateTime"
     Subject: "patient/reference"
-  
-#Relative path to provisions from consent
-Provisions:
-  Path: "provision/provision"

@@ -83,6 +83,9 @@ def getProvisionTimeSet(consents, provision_config):
 
 def matchResourcesWithConsents(resources, consents, resource_config, provision_config):
     
+    if(LOG_LEVEL=="DEBUG"): print(f"resource_config: {resource_config}")
+    if(LOG_LEVEL=="DEBUG"): print(f"provision_config: {provision_config}")
+
     provision_time_set = getProvisionTimeSet(consents, provision_config)
     if(LOG_LEVEL=="DEBUG"): print(f"provision_time_set:{provision_time_set}")
 

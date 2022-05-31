@@ -14,7 +14,7 @@ with open('../config/resource_config.yml') as cfgfile:
     resource_config = yaml.safe_load(cfgfile)
 
 RESOURCE_PATHS = resource_config['Resources']
-LOG_LEVEL = os.environ("LOG_LEVEL")
+LOG_LEVEL = os.getenv("LOG_LEVEL","INFO")
 
 class FHIR_Facade_Server(Resource):
 
@@ -23,7 +23,7 @@ class FHIR_Facade_Server(Resource):
         SERVER_URL = os.environ['FHIR_SERVER_URL']
         try:
             prov_conf = json.loads(params["provision_config"])
-            if(prov_conf =={} or not "code" in prov_conf.keys() or not "coding" in prov_conf["code"][0]):
+            if(prov_conf =={} or not "coding" in prov_conf):
                 with open('../config/general_provision_config.json') as cfgfile:
                     prov_conf = json.loads(cfgfile.read())
                 print("invalid provision_config, defaulting to config/general_provision_config.json")
@@ -148,7 +148,7 @@ class FHIR_Facade_Server(Resource):
 
                 try:
                     prov_conf = json.loads(data["provision_config"])
-                    if(prov_conf =={} or not "code" in prov_conf.keys() or not "coding" in prov_conf["code"][0]):
+                    if(prov_conf =={} or not "coding" in prov_conf):
                         with open('../config/general_provision_config.json') as cfgfile:
                             prov_conf = json.loads(cfgfile.read())
                         print("invalid provision_config, defaulting to config/general_provision_config.json")
