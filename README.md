@@ -62,7 +62,7 @@ Pass a List of provision codes in a json format based on the [MII Kerndatensatz]
 Every Consent is required to have ALL provided provisions as a subset of its provision. This structure is required for the preconfiguration as well as the parameter version.
 
 
-<code>
+```
 {
     "coding":  [
         {
@@ -71,4 +71,4 @@ Every Consent is required to have ALL provided provisions as a subset of its pro
         }
     ]   
 }
-</code>
+```
