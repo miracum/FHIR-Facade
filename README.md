@@ -46,15 +46,15 @@ Both variants expose the facade-endpoint on :8082/fhir/ unless configured otherw
 ### Resource Configuration
 All Resources that are supposed to be accessed via the facade have to be configured in the config/resource_config.yml file. It is required that for every resource there is a path from the base resource to a subject/patient and the relevant date with regards to consent.
 
-
-`Resources:`
-`  Observation:`
-`    Date: "issued"`
-`    Subject: "subject/reference"`
-`  Encounter:`
-`    Date: "period/start"`
-`    Subject: "subject/reference"`
-
+```
+Resources:
+  Observation:
+    Date: "issued"
+    Subject: "subject/reference"
+  Encounter:
+    Date: "period/start"
+    Subject: "subject/reference"
+```
 
 ### Provision Configuration
 Provisions can be configured either before container startup in the config/general_provison_config.json or during runtime:
@@ -62,6 +62,7 @@ Pass a List of provision codes in a json format based on the [MII Kerndatensatz]
 Every Consent is required to have ALL provided provisions as a subset of its provision. This structure is required for the preconfiguration as well as the parameter version.
 
 
+<code>
 {
     "coding":  [
         {
@@ -70,3 +71,4 @@ Every Consent is required to have ALL provided provisions as a subset of its pro
         }
     ]   
 }
+</code>
