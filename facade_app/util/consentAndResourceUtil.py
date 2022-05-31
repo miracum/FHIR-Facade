@@ -27,6 +27,7 @@ def getAllConsents(SERVER_URL):
         corrected_url = SERVER_URL + response["link"][link_index]["url"].split("/fhir/")[1]
 
         response = s.get(corrected_url, auth=auth, verify=False)
+        if(LOG_LEVEL=="DEBUG"): print(f"Paged consent response: {response}")
 
         #Extract entries and relevant fields
         raw_consents = raw_consents + [entry["resource"] for entry in response["entry"]]
