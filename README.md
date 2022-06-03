@@ -16,6 +16,8 @@
 | LOG_LEVEL | INFO | Determines the amount of console output | Valid values: INFO / DEBUG |
 | BA_USER_NAME | | BasicAuth username if required for the connection to the fhir server | |
 | BA_PASSWORD | | BasicAuth password if required for the connection to the fhir server | |
+| RESOURCE_CONFIG | | Multiline yaml, analogue to the resource config file | |
+| PROVISION_CONFIG | | Multiline json, analogue to the provison config file | | 
 
 
 ### Standalone Deployment
@@ -44,7 +46,7 @@ Both variants expose the facade-endpoint on :8082/fhir/ unless configured otherw
 ## Configuration
 
 ### Resource Configuration
-All Resources that are supposed to be accessed via the facade have to be configured in the config/resource_config.yml file. It is required that for every resource there is a path from the base resource to a subject/patient and the relevant date with regards to consent.
+All Resources that are supposed to be accessed via the facade have to be configured as a environment variable or in the config/resource_config.yml file. It is required that for every resource there is a path from the base resource to a subject/patient and the relevant date with regards to consent. 
 
 #### Example:
 ```

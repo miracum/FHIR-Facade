@@ -1,6 +1,6 @@
 import yaml, json, requests, os, math
 from requests.auth import HTTPBasicAuth
-from flask import Flask, request
+from flask import request, Response
 from flask_restful import Resource
 from util.consentAndResourceUtil import getAllConsents, matchResourcesWithConsents
 from util.bundleUtil import fhirBundlifyList
@@ -10,8 +10,12 @@ from util.pagingStoreController import storePage, getPage, clearPages
 
 #import config from yml files
 global resource_config
-with open('../config/resource_config.yml') as cfgfile:
-    resource_config = yaml.safe_load(cfgfile)
+temp = os.getenv("RESOURCE_CONFIG","")
+if(temp!=""):
+    resource_config = yaml.safe_load(temp)
+else:
+    with open('../config/resource_config.yml') as cfgfile:
+        resource_config = yaml.safe_load(cfgfile)
 
 RESOURCE_PATHS = resource_config['Resources']
 LOG_LEVEL = os.getenv("LOG_LEVEL","INFO")
@@ -19,18 +23,28 @@ LOG_LEVEL = os.getenv("LOG_LEVEL","INFO")
 class FHIR_Facade_Server(Resource):
 
     def get(self, resource):
+
+        #Health_Endpoint
+        if(resource=="healthZ"):
+            return Response(status=200)
+
         params = request.args.copy()
         SERVER_URL = os.environ['FHIR_SERVER_URL']
+
+        #Try loading config from request > env > file
         try:
             prov_conf = json.loads(params["provision_config"])
             if(prov_conf =={} or not "coding" in prov_conf):
+                raise Exception
+        except:
+            temp = os.getenv("PROVISION_CONFIG","")
+            if(temp!=""):
+                prov_conf = json.loads(temp)
+            else:
                 with open('../config/general_provision_config.json') as cfgfile:
                     prov_conf = json.loads(cfgfile.read())
-                print("invalid provision_config, defaulting to config/general_provision_config.json")
-        except:
-            with open('../config/general_provision_config.json') as cfgfile:
-                prov_conf = json.loads(cfgfile.read())
-            print("no provision_config provided, defaulting to config/general_provision_config.json")
+                print("no provision_config provided, defaulting to config/general_provision_config.json")
+                
 
         if(resource == "Page" and "__page-id" in params):
             return getPage(params["__page-id"])
@@ -77,7 +91,7 @@ class FHIR_Facade_Server(Resource):
             next_page_id = ""
             for i in range(num_of_pages):
                 if(i+1 == num_of_pages):
-                    topIndex = -1
+                    topIndex = None
                     botIndex = i*page_size
                 else:
                     topIndex = (i+1)*page_size
@@ -139,6 +153,7 @@ class FHIR_Facade_Server(Resource):
                 s = requests.session()
                 auth=HTTPBasicAuth(os.getenv("BA_USER_NAME",""),os.getenv("BA_PASSWORD",""))
 
+                #Merge params and jsondata
                 try:
                     data = json.loads(request.data)
                     data.update(params)
@@ -146,16 +161,20 @@ class FHIR_Facade_Server(Resource):
                     data = {}
                     data.update(params)
 
+                #Try loading config from request > env > file
                 try:
-                    prov_conf = json.loads(data["provision_config"])
+                    prov_conf = json.loads(params["provision_config"])
                     if(prov_conf =={} or not "coding" in prov_conf):
+                        raise Exception
+                except:
+                    temp = os.getenv("PROVISION_CONFIG","")
+                    if(temp!=""):
+                        prov_conf = json.loads(temp)
+                    else:
                         with open('../config/general_provision_config.json') as cfgfile:
                             prov_conf = json.loads(cfgfile.read())
-                        print("invalid provision_config, defaulting to config/general_provision_config.json")
-                except:
-                    with open('../config/general_provision_config.json') as cfgfile:
-                        prov_conf = json.loads(cfgfile.read())
-                    print("no provision_config provided, defaulting to config/general_provision_config.json")
+                        print("no provision_config provided, defaulting to config/general_provision_config.json")
+
 
                 response = s.post(SERVER_URL + resource + '/_search', auth=auth, params=data, verify=False).json()
                 if(LOG_LEVEL=="DEBUG"): print(f"initial response: {response}")
@@ -182,7 +201,7 @@ class FHIR_Facade_Server(Resource):
                 next_page_id = ""
                 for i in range(num_of_pages):
                     if(i+1 == num_of_pages):
-                        topIndex = -1
+                        topIndex = None
                         botIndex = i*page_size
                     else:
                         topIndex = (i+1)*page_size

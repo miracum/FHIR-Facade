@@ -1,8 +1,30 @@
 version: '3.9'
 services:
-  fhir-facade:
+  fhir_facade:
     container_name: fhir-facade
-    build: ./facade-app
+    build: ./facade_app
     restart: unless-stopped
     ports: 
       - ${FACADE_PORT:-8082}:${FACADE_PORT:-8082}
+    environment:
+      RESOURCE_CONFIG: | 
+        Resources:
+          PlaceholderResource:
+            subject: ""
+            date: ""
+          Consent: 
+            Date: "dateTime"
+            Subject: "patient/reference"
+      PROVISION_CONFIG: |
+        {
+          "coding":[
+            {
+              "system": "urn:oid:2.16.840.1.113883.3.1937.777.24.5.3",
+              "code": "2.16.840.1.113883.3.1937.777.24.5.3.8"
+            }
+          ]
+        }
+    
+      
+
+

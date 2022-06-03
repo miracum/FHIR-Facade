@@ -1,6 +1,5 @@
-import yaml, requests, os, urllib.request
-from flask import Flask, request
-from flask_restful import reqparse, abort, Api, Resource
+from flask import Flask
+from flask_restful import Api
 from resources.fhir_facade_server import FHIR_Facade_Server
 
 app = Flask(__name__)

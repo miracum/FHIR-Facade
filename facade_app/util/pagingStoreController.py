@@ -57,3 +57,4 @@ def clearPages(page_store_time, dir_to_search="./pages/"):
                     file_modified = datetime.datetime.fromtimestamp(os.path.getmtime(curpath))
                     if datetime.datetime.now() - file_modified > datetime.timedelta(seconds=page_store_time):
                         os.remove(curpath)
+        print("Removed expired pages")
