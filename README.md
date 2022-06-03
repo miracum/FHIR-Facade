@@ -18,6 +18,8 @@
 | BA_PASSWORD | | BasicAuth password if required for the connection to the fhir server | |
 | RESOURCE_CONFIG | | Multiline yaml, analogue to the resource config file | |
 | PROVISION_CONFIG | | Multiline json, analogue to the provison config file | | 
+| SSL_CERT | | Certificate for https | |
+| SSL_KEY | | Key for https | |
 
 
 ### Standalone Deployment
