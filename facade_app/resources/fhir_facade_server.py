@@ -1,5 +1,6 @@
 import yaml, json, requests, os, math
 from requests.auth import HTTPBasicAuth
+import uuid, shortuuid
 from flask import request, Response
 from flask_restful import Resource
 from util.consentAndResourceUtil import getAllConsents, matchResourcesWithConsents
@@ -57,10 +58,13 @@ class FHIR_Facade_Server(Resource):
             #refreshAllConsents
             all_consents = getAllConsents(SERVER_URL)
             page_size = int(os.environ["PAGE_SIZE"])
+            int_page_size = int(os.getenv("INTERNAL_PAGE_SIZE", 2000))
             page_store_time = int(os.environ["PAGE_STORE_TIME"])
             raw_resources = []
             matched_resources = []
             page_id_list = []
+            internal_page_id_list = []
+            length_sum = 0
 
             #get initial resources from fhir server
             s = requests.session()
@@ -75,6 +79,14 @@ class FHIR_Facade_Server(Resource):
             #Iterate over potential paged responses
             while("next" in [link["relation"] for link in response["link"]]):
 
+                #If there are to many resources matched, trigger internal paging
+                if(len(matched_resources)>=int_page_size):
+                    uid = shortuuid.encode(uuid.uuid4())
+                    storePage({"page": matched_resources[0:int_page_size]},uid)
+                    internal_page_id_list.append(uid)
+                    length_sum += int_page_size
+                    matched_resources = matched_resources[int_page_size:]
+
                 link_index = [link["relation"] for link in response["link"]].index("next")
                 corrected_url = SERVER_URL + response["link"][link_index]["url"].split("/fhir/")[1]
 
@@ -86,9 +98,18 @@ class FHIR_Facade_Server(Resource):
             
                 matched_resources = matched_resources + matchResourcesWithConsents(resources=raw_resources,consents=all_consents,resource_config=RESOURCE_PATHS[resource], provision_config=prov_conf)
 
+            #Trigger internal paging for remaining Elements
+            uid = shortuuid.encode(uuid.uuid4())
+            storePage({"page": matched_resources},uid)
+            internal_page_id_list.append(uid)
+            length_sum += len(matched_resources)
+                
+
+
             #Page results and return first page
-            num_of_pages = math.ceil(len(matched_resources)/page_size)
+            num_of_pages = math.ceil(length_sum/page_size)
             next_page_id = ""
+            matched_resources = getPage(internal_page_id_list.pop(), True)["page"]
             for i in range(num_of_pages):
                 if(i+1 == num_of_pages):
                     topIndex = None
@@ -96,6 +117,9 @@ class FHIR_Facade_Server(Resource):
                 else:
                     topIndex = (i+1)*page_size
                     botIndex = i*page_size
+                
+                if(topIndex != None and topIndex >=len(matched_resources)):
+                    matched_resources.extend(getPage(internal_page_id_list.pop(), True)["page"])
 
                 curr_page, next_page_id = fhirBundlifyList(list=matched_resources[botIndex:topIndex],
                                             total=len(matched_resources),
@@ -145,9 +169,12 @@ class FHIR_Facade_Server(Resource):
                 all_consents = getAllConsents(SERVER_URL)
                 page_size = int(os.environ["PAGE_SIZE"])
                 page_store_time = int(os.environ["PAGE_STORE_TIME"])
+                int_page_size = int(os.getenv("INTERNAL_PAGE_SIZE", 2000))
                 matched_resources = []
                 raw_resources = []
                 page_id_list = []
+                internal_page_id_list = []
+                length_sum = 0
 
                 #get initial resources from fhir server
                 s = requests.session()
@@ -185,6 +212,14 @@ class FHIR_Facade_Server(Resource):
                 #Iterate over potential paged responses
                 while("next" in [link["relation"] for link in response["link"]]):
 
+                    #If there are to many resources matched, trigger internal paging
+                    if(len(matched_resources)>=int_page_size):
+                        uid = shortuuid.encode(uuid.uuid4())
+                        storePage({"page": matched_resources[0:int_page_size]},uid)
+                        internal_page_id_list.append(uid)
+                        length_sum += int_page_size
+                        matched_resources = matched_resources[int_page_size:]
+
                     link_index = [link["relation"] for link in response["link"]].index("next")
                     corrected_url = SERVER_URL + response["link"][link_index]["url"].split("/fhir/")[1]
 
@@ -196,9 +231,18 @@ class FHIR_Facade_Server(Resource):
                 
                     matched_resources = matched_resources + matchResourcesWithConsents(resources=raw_resources,consents=all_consents,resource_config=RESOURCE_PATHS[resource], provision_config=prov_conf)
 
+                #Trigger internal paging for remaining Elements
+                uid = shortuuid.encode(uuid.uuid4())
+                storePage({"page": matched_resources},uid)
+                internal_page_id_list.append(uid)
+                length_sum += len(matched_resources)
+                    
+
+
                 #Page results and return first page
-                num_of_pages = math.ceil(len(matched_resources)/page_size)
+                num_of_pages = math.ceil(length_sum/page_size)
                 next_page_id = ""
+                matched_resources = getPage(internal_page_id_list.pop(), True)["page"]
                 for i in range(num_of_pages):
                     if(i+1 == num_of_pages):
                         topIndex = None
@@ -206,6 +250,9 @@ class FHIR_Facade_Server(Resource):
                     else:
                         topIndex = (i+1)*page_size
                         botIndex = i*page_size
+                    
+                    if(topIndex != None and topIndex >=len(matched_resources)):
+                        matched_resources.extend(getPage(internal_page_id_list.pop(), True)["page"])
 
                     curr_page, next_page_id = fhirBundlifyList(list=matched_resources[botIndex:topIndex],
                                                 total=len(matched_resources),
