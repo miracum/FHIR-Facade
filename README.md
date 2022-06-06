@@ -20,15 +20,26 @@
 | PROVISION_CONFIG | | Multiline json, analogue to the provison config file | | 
 | SSL_CERT | | Certificate for https | |
 | SSL_KEY | | Key for https | |
+| UWSGI_THREADS | 1 | Number of Threads for uWSGI | |
+| UWSGI_PROCESSES | 1 | Number of Processes for uWSGI | |
 
 
 ### Standalone Deployment
 
-In order to run the standalone facade from the cloned repository simply run: 
 
-`docker compose up`
 
-Or pull the build image from [dockerhub](https://hub.docker.com/repository/docker/boehmdo/fhir-facade)
+In order to build and run the standalone facade from the cloned repository simply run the following, replacing the forwarded port in case you altered the configuration.
+
+`docker build --tag=fhirfacade ./facade_app/`
+
+`docker run -p 8082:8082 fhirfacade`
+
+
+Or pull the build image from [dockerhub](https://hub.docker.com/repository/docker/boehmdo/fhir-facade), replacing <b>latest</b> with a specific version if required.
+
+`docker pull boehmdo/fhir-facade:latest`
+
+`docker run -p 8082:8082 -e FACADE_PORT=8082 boehmdo/fhir-facade`
 
 ### Test Deployment
 

@@ -64,13 +64,13 @@ def getProvisionTimeSet(consents, provision_config):
     for consent in consents:
 
         patient = consent["patient"]["reference"]
+        consent_provision_list = [provision["code"][0]["coding"][0] for provision in consent["provision"]["provision"]]
 
-        for provision in consent["provision"]["provision"]:
+        #check whether configured provisions are a subset of the consent provisions
+        if(not (False in [True in [(all(prov.get(key, None) == val for key, val in config_code.items())) for prov in consent_provision_list] for config_code in conf_prov_codes])):
+            for provision in consent["provision"]["provision"]:
 
-            provision_coding = provision["code"][0]["coding"][0]
-            
-            #check whether configured provisions are a subset of the consent provisions
-            if(True in [(all(provision_coding.get(key, None) == val for key, val in config_code.items())) for config_code in conf_prov_codes]):
+                provision_coding = provision["code"][0]["coding"][0]
                 
                 try:
                     temp = provision_time_set[patient]
