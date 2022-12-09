@@ -1,7 +1,7 @@
 pyyaml
 flask
 flask-restful
-uwsgi
+gunicorn
 python-dateutil
 requests
 shortuuid

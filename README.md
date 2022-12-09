@@ -20,8 +20,7 @@
 | PROVISION_CONFIG | | Multiline json, analogue to the provison config file | | 
 | SSL_CERT | | Certificate for https | |
 | SSL_KEY | | Key for https | |
-| UWSGI_THREADS | 1 | Number of Threads for uWSGI | |
-| UWSGI_PROCESSES | 1 | Number of Processes for uWSGI | |
+| GUNICORN_WORKERS | multiprocessing.cpu_count() * 2 + 1 | Number of Gunicorn Workers | |
 
 
 ### Standalone Deployment
