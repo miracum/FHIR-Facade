@@ -9,4 +9,4 @@ else
     echo "$SSL_CERT" > /data/ssl/foobar.crt 
     echo "$SSL_KEY" > /data/ssl/foobar.key 
 fi 
-uwsgi wsgi.ini
+gunicorn --certfile=/data/ssl/foobar.crt --keyfile=/data/ssl/foobar.key api:app 
