@@ -21,6 +21,7 @@
 | SSL_CERT | | Certificate for https | |
 | SSL_KEY | | Key for https | |
 | GUNICORN_WORKERS | multiprocessing.cpu_count() * 2 + 1 | Number of Gunicorn Workers | |
+| CONSENT_CACHE_TIME | 60 | Seconds till Consents are being refreshed | |
 
 
 ### Standalone Deployment

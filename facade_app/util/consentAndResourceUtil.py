@@ -14,10 +14,18 @@ def getAllConsents(SERVER_URL):
     # Initial request and processing
     s = requests.session()
     auth = HTTPBasicAuth(os.getenv("BA_USER_NAME", ""), os.getenv("BA_PASSWORD", ""))
-    response = s.get(SERVER_URL + "Consent", auth=auth, verify=False).json()
+    params = {"_format": "application/fhir+json"}
+    headers = {"Accept": "application/fhir+json"}
+    response = s.post(
+        SERVER_URL + "Consent/_search",
+        auth=auth,
+        headers=headers,
+        params=params,
+        verify=False,
+    ).json()
 
     if LOG_LEVEL == "DEBUG":
-        print(f"Initial consent response: {response}")
+        print(f"INITIAL_CONSENT_RESPONSE: {response}")
 
     if "entry" in response.keys():
         raw_consents = [entry["resource"] for entry in response["entry"]]
@@ -32,7 +40,7 @@ def getAllConsents(SERVER_URL):
 
         response = s.get(corrected_url, auth=auth, verify=False).json()
         if LOG_LEVEL == "DEBUG":
-            print(f"Paged consent response: {response}")
+            print(f"PAGED_CONSENT_RESPONSE: {response}")
 
         # Extract entries and relevant fields
         raw_consents = raw_consents + [entry["resource"] for entry in response["entry"]]

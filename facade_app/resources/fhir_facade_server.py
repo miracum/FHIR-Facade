@@ -1,12 +1,18 @@
-import yaml, json, requests, os, math
+import yaml, json, requests, os, math, time
 from requests.auth import HTTPBasicAuth
 import uuid, shortuuid
+import flask
 from flask import request, Response
 from flask_restful import Resource
 from util.consentAndResourceUtil import getAllConsents, matchResourcesWithConsents
 from util.bundleUtil import fhirBundlifyList
-from util.pagingStoreController import storePage, getPage, clearPages
-
+from util.pagingStoreController import (
+    storePage,
+    getPage,
+    clearPages,
+    storeConsents,
+    loadConsents,
+)
 
 # import config from yml files
 temp = os.getenv("RESOURCE_CONFIG", "")
@@ -55,19 +61,30 @@ def handleRequest(self, resource, search=""):
         )
 
     SERVER_URL = os.getenv("FHIR_SERVER_URL", "")
-    params["_format"] = "application/json"
-    headers = {"Accept": "application/json"}
+    PAGE_SIZE = int(os.environ["PAGE_SIZE"])
+    PAGE_STORE_TIME = int(os.environ["PAGE_STORE_TIME"])
+    INT_PAGE_SIZE = int(os.getenv("INTERNAL_PAGE_SIZE", 2000))
+    CONSENT_CACHE_TIME = int(os.getenv("CONSENT_CACHE_TIME", 60))
 
-    # refreshAllConsents
-    all_consents = getAllConsents(SERVER_URL)
-    page_size = int(os.environ["PAGE_SIZE"])
-    page_store_time = int(os.environ["PAGE_STORE_TIME"])
-    int_page_size = int(os.getenv("INTERNAL_PAGE_SIZE", 2000))
     matched_resources = []
     raw_resources = []
     page_id_list = []
     internal_page_id_list = []
     length_sum = 0
+
+    params["_format"] = "application/fhir+json"
+    headers = {"Accept": "application/fhir+json"}
+
+    # refreshAllConsents
+    [all_consents, timeStamp] = loadConsents()
+    if (timeStamp + CONSENT_CACHE_TIME) < time.time() or len(all_consents) == 0:
+        all_consents = getAllConsents(SERVER_URL)
+        storeConsents([all_consents, time.time()])
+
+        if LOG_LEVEL == "INFO":
+            print(f"refreshed consents at {int(time.time())}seconds")
+    if LOG_LEVEL == "DEBUG":
+        print(f"all consents: {all_consents}")
 
     # get initial resources from fhir server
     s = requests.session()
@@ -100,6 +117,7 @@ def handleRequest(self, resource, search=""):
     response = s.post(
         SERVER_URL + resource + "/_search",
         auth=auth,
+        headers=headers,
         params=data,
         verify=False,
     ).json()
@@ -118,12 +136,12 @@ def handleRequest(self, resource, search=""):
     while "next" in [link["relation"] for link in response["link"]]:
 
         # If there are to many resources matched, trigger internal paging
-        if len(matched_resources) >= int_page_size:
+        if len(matched_resources) >= INT_PAGE_SIZE:
             uid = shortuuid.encode(uuid.uuid4())
-            storePage({"page": matched_resources[0:int_page_size]}, uid)
+            storePage({"page": matched_resources[0:INT_PAGE_SIZE]}, uid)
             internal_page_id_list.append(uid)
-            length_sum += int_page_size
-            matched_resources = matched_resources[int_page_size:]
+            length_sum += INT_PAGE_SIZE
+            matched_resources = matched_resources[INT_PAGE_SIZE:]
 
         link_index = [link["relation"] for link in response["link"]].index("next")
         corrected_url = (
@@ -151,16 +169,16 @@ def handleRequest(self, resource, search=""):
     length_sum += len(matched_resources)
 
     # Page results and return first page
-    num_of_pages = math.ceil(length_sum / page_size)
+    num_of_pages = math.ceil(length_sum / PAGE_SIZE)
     next_page_id = ""
     matched_resources = getPage(internal_page_id_list.pop(), True)["page"]
     for i in range(num_of_pages):
         if i + 1 == num_of_pages:
             topIndex = None
-            botIndex = i * page_size
+            botIndex = i * PAGE_SIZE
         else:
-            topIndex = (i + 1) * page_size
-            botIndex = i * page_size
+            topIndex = (i + 1) * PAGE_SIZE
+            botIndex = i * PAGE_SIZE
 
         if topIndex != None and topIndex >= len(matched_resources):
             matched_resources.extend(getPage(internal_page_id_list.pop(), True)["page"])
@@ -169,16 +187,16 @@ def handleRequest(self, resource, search=""):
             list=matched_resources[botIndex:topIndex],
             total=len(matched_resources),
             uid=next_page_id,
-            page_size=page_size,
-            page_store_time=page_store_time,
-            facade_url=f"https://localhost:{(os.environ['FACADE_PORT'])}/fhir/",
+            page_size=PAGE_SIZE,
+            page_store_time=PAGE_STORE_TIME,
+            facade_url=f"{request.url_root}fhir/",
             lastPage=(i + 1 == num_of_pages),
         )
         page_id_list.append(curr_page["id"])
 
-        storePage(curr_page, curr_page["id"], page_store_time)
+        storePage(curr_page, curr_page["id"], PAGE_STORE_TIME)
 
-    clearPages(page_store_time)
+    clearPages(PAGE_STORE_TIME)
 
     if len(page_id_list) != 0:
         return getPage(page_id_list[0])
@@ -186,12 +204,12 @@ def handleRequest(self, resource, search=""):
         emptySearchPage, nextUid = fhirBundlifyList(
             list=[],
             total=0,
-            page_size=page_size,
-            page_store_time=page_store_time,
-            facade_url=f"https://localhost:{(os.environ['FACADE_PORT'])}/fhir/",
+            page_size=PAGE_SIZE,
+            page_store_time=PAGE_STORE_TIME,
+            facade_url=f"{request.url_root}fhir/",
             lastPage=True,
         )
-        storePage(emptySearchPage, emptySearchPage["id"], page_store_time)
+        storePage(emptySearchPage, emptySearchPage["id"], PAGE_STORE_TIME)
         return emptySearchPage
 
 
@@ -199,5 +217,5 @@ class FHIR_Facade_Server(Resource):
     def get(self, resource):
         return handleRequest(self, resource, "_search")
 
-    def post(self, resource, search="false"):
+    def post(self, resource, search="False"):
         return handleRequest(self, resource, search)
