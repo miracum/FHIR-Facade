@@ -1,8 +1,22 @@
-import json, os, datetime
+import json, os, datetime, pickle
 from pymongo import MongoClient
 import pymongo
 
 LOG_LEVEL = os.environ["LOG_LEVEL"]
+
+
+def storeConsents(consents):
+    with open("./pages/consent", "wb") as outFile:
+        pickle.dump(consents, outFile)
+
+
+def loadConsents():
+    cons = [[], 0]
+    try:
+        with open("./pages/consent", "rb") as inFile:
+            cons = pickle.load(inFile)
+    finally:
+        return cons
 
 
 def connectToMongoPaging(page_store_time=1200):
