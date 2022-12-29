@@ -6,6 +6,48 @@ from requests.auth import HTTPBasicAuth
 LOG_LEVEL = os.environ["LOG_LEVEL"]
 
 
+def getAllConsentsFromGICS(GICS_URL, template, domain, profile):
+
+    # Initial request and processing
+    s = requests.session()
+    auth = HTTPBasicAuth(os.getenv("BA_USER_NAME", ""), os.getenv("BA_PASSWORD", ""))
+    params = {"template": template, "domain": domain, "profile": profile}
+    response = s.post(
+        GICS_URL + "$allConsentsForTemplate",
+        auth=auth,
+        params=params,
+        verify=False,
+    ).json()
+
+    if "entry" in response.keys():
+        raw_consents = [
+            entry["resource"]
+            for entry in response["entry"]
+            if entry["resource"]["resourceType"] == "Consent"
+        ]
+
+    # Iterate over potential paged responses
+    while "next" in [link["relation"] for link in response["link"]]:
+
+        link_index = [link["relation"] for link in response["link"]].index("next")
+        corrected_url = (
+            GICS_URL + response["link"][link_index]["url"].split("/fhir/gics/")[1]
+        )
+
+        response = s.get(corrected_url, auth=auth, verify=False).json()
+        if LOG_LEVEL == "DEBUG":
+            print(f"PAGED_CONSENT_RESPONSE: {response}")
+
+        # Extract entries and relevant fields
+        raw_consents = raw_consents + [
+            entry["resource"]
+            for entry in response["entry"]
+            if entry["resource"]["resourceType"] == "Consent"
+        ]
+
+    return filterConsents(raw_consents)
+
+
 def getAllConsents(SERVER_URL):
 
     # Get request for all consents
