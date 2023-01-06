@@ -1,5 +1,6 @@
-import yaml, json, requests, os, math, time
+import yaml, json, requests, os, math, time, multiprocessing
 from requests.auth import HTTPBasicAuth
+from functools import partial
 import uuid, shortuuid
 import flask
 from flask import request, Response
@@ -60,157 +61,179 @@ def handleRequest(self, resource, search=""):
             403,
         )
 
+    # Initialize environment variables
     SERVER_URL = os.getenv("FHIR_SERVER_URL", "")
     PAGE_SIZE = int(os.environ["PAGE_SIZE"])
     PAGE_STORE_TIME = int(os.environ["PAGE_STORE_TIME"])
     INT_PAGE_SIZE = int(os.getenv("INTERNAL_PAGE_SIZE", 2000))
     CONSENT_CACHE_TIME = int(os.getenv("CONSENT_CACHE_TIME", 60))
+    PROCESSES_PER_WORKER = int(os.getenv("PROCESSES_PER_WORKER", "1"))
 
-    matched_resources = []
-    raw_resources = []
-    page_id_list = []
-    internal_page_id_list = []
-    length_sum = 0
+    # Initialize multiprocessing pool with specified number of processes
+    mp = multiprocessing.get_context("spawn")
+    with mp.Pool(PROCESSES_PER_WORKER) as pool:
 
-    params["_format"] = "application/fhir+json"
-    headers = {"Accept": "application/fhir+json"}
+        matched_resources = []
+        raw_resources = []
+        page_id_list = []
+        internal_page_id_list = []
+        length_sum = 0
 
-    # refreshAllConsents
-    [all_consents, timeStamp] = loadConsents()
-    if (timeStamp + CONSENT_CACHE_TIME) < time.time() or len(all_consents) == 0:
-        all_consents = getAllConsents(SERVER_URL)
-        storeConsents([all_consents, time.time()])
+        params["_format"] = "application/fhir+json"
+        headers = {"Accept": "application/fhir+json"}
 
-        if LOG_LEVEL == "INFO":
-            print(f"refreshed consents at {int(time.time())}seconds")
-    if LOG_LEVEL == "DEBUG":
-        print(f"all consents: {all_consents}")
+        # refreshAllConsents
+        [all_consents, timeStamp] = loadConsents()
+        if (timeStamp + CONSENT_CACHE_TIME) < time.time() or len(all_consents) == 0:
+            all_consents = getAllConsents(SERVER_URL)
+            storeConsents([all_consents, time.time()])
 
-    # get initial resources from fhir server
-    s = requests.session()
-    auth = HTTPBasicAuth(os.getenv("BA_USER_NAME", ""), os.getenv("BA_PASSWORD", ""))
+            if LOG_LEVEL == "INFO":
+                print(f"refreshed consents at {int(time.time())}seconds")
+        if LOG_LEVEL == "DEBUG":
+            print(f"all consents: {all_consents}")
 
-    # Merge params and jsondata
-    try:
-        data = json.loads(request.data)
-        data.update(params)
-    except:
-        data = {}
-        data.update(params)
+        # get initial resources from fhir server
+        s = requests.session()
+        auth = HTTPBasicAuth(
+            os.getenv("BA_USER_NAME", ""), os.getenv("BA_PASSWORD", "")
+        )
 
-    # Try loading config from request > env > file
-    try:
-        prov_conf = json.loads(params["provision_config"])
-        if prov_conf == {} or not "coding" in prov_conf:
-            raise Exception
-    except:
-        temp = os.getenv("PROVISION_CONFIG", "")
-        if temp != "":
-            prov_conf = json.loads(temp)
-        else:
-            with open("../config/general_provision_config.json") as cfgfile:
-                prov_conf = json.loads(cfgfile.read())
-            print(
-                "no provision_config provided, defaulting to config/general_provision_config.json"
+        # Merge params and jsondata
+        try:
+            data = json.loads(request.data)
+            data.update(params)
+        except:
+            data = {}
+            data.update(params)
+
+        # Try loading config from request > env > file
+        try:
+            prov_conf = json.loads(params["provision_config"])
+            if prov_conf == {} or not "coding" in prov_conf:
+                raise Exception
+        except:
+            temp = os.getenv("PROVISION_CONFIG", "")
+            if temp != "":
+                prov_conf = json.loads(temp)
+            else:
+                with open("../config/general_provision_config.json") as cfgfile:
+                    prov_conf = json.loads(cfgfile.read())
+                print(
+                    "no provision_config provided, defaulting to config/general_provision_config.json"
+                )
+
+        response = s.post(
+            SERVER_URL + resource + "/_search",
+            auth=auth,
+            headers=headers,
+            params=data,
+            verify=False,
+        ).json()
+        if LOG_LEVEL == "DEBUG":
+            print(f"initial response: {response}")
+        if "entry" in response.keys():
+            raw_resources = response["entry"]
+            mapped_results = pool.map(
+                partial(
+                    matchResourcesWithConsents(
+                        consents=all_consents,
+                        resource_config=RESOURCE_PATHS[resource],
+                        provision_config=prov_conf,
+                    ),
+                    resources=raw_resources,
+                )
+            )
+            for result in mapped_results:
+                matched_resources.extend(result)
+
+        # Iterate over potential paged responses
+        while "next" in [link["relation"] for link in response["link"]]:
+
+            # If there are to many resources matched, trigger internal paging
+            if len(matched_resources) >= INT_PAGE_SIZE:
+                uid = shortuuid.encode(uuid.uuid4())
+                storePage({"page": matched_resources[0:INT_PAGE_SIZE]}, uid)
+                internal_page_id_list.append(uid)
+                length_sum += INT_PAGE_SIZE
+                matched_resources = matched_resources[INT_PAGE_SIZE:]
+
+            link_index = [link["relation"] for link in response["link"]].index("next")
+            corrected_url = (
+                SERVER_URL + response["link"][link_index]["url"].split("/fhir/")[1]
             )
 
-    response = s.post(
-        SERVER_URL + resource + "/_search",
-        auth=auth,
-        headers=headers,
-        params=data,
-        verify=False,
-    ).json()
-    if LOG_LEVEL == "DEBUG":
-        print(f"initial response: {response}")
-    if "entry" in response.keys():
-        raw_resources = response["entry"]
-        matched_resources = matchResourcesWithConsents(
-            resources=raw_resources,
-            consents=all_consents,
-            resource_config=RESOURCE_PATHS[resource],
-            provision_config=prov_conf,
-        )
+            response = s.get(corrected_url, auth=auth, verify=False).json()
+            if LOG_LEVEL == "DEBUG":
+                print(f"paged response: {response}")
 
-    # Iterate over potential paged responses
-    while "next" in [link["relation"] for link in response["link"]]:
+            # Extract entries and relevant fields
+            raw_resources = response["entry"]
 
-        # If there are to many resources matched, trigger internal paging
-        if len(matched_resources) >= INT_PAGE_SIZE:
-            uid = shortuuid.encode(uuid.uuid4())
-            storePage({"page": matched_resources[0:INT_PAGE_SIZE]}, uid)
-            internal_page_id_list.append(uid)
-            length_sum += INT_PAGE_SIZE
-            matched_resources = matched_resources[INT_PAGE_SIZE:]
+            mapped_results = matched_resources + pool.map(
+                partial(
+                    matchResourcesWithConsents(
+                        consents=all_consents,
+                        resource_config=RESOURCE_PATHS[resource],
+                        provision_config=prov_conf,
+                    ),
+                    resources=raw_resources,
+                )
+            )
+            for result in mapped_results:
+                matched_resources.extend(result)
 
-        link_index = [link["relation"] for link in response["link"]].index("next")
-        corrected_url = (
-            SERVER_URL + response["link"][link_index]["url"].split("/fhir/")[1]
-        )
+        # Trigger internal paging for remaining Elements
+        uid = shortuuid.encode(uuid.uuid4())
+        storePage({"page": matched_resources}, uid)
+        internal_page_id_list.append(uid)
+        length_sum += len(matched_resources)
 
-        response = s.get(corrected_url, auth=auth, verify=False).json()
-        if LOG_LEVEL == "DEBUG":
-            print(f"paged response: {response}")
+        # Page results and return first page
+        num_of_pages = math.ceil(length_sum / PAGE_SIZE)
+        next_page_id = ""
+        matched_resources = getPage(internal_page_id_list.pop(), True)["page"]
+        for i in range(num_of_pages):
+            if i + 1 == num_of_pages:
+                topIndex = None
+                botIndex = i * PAGE_SIZE
+            else:
+                topIndex = (i + 1) * PAGE_SIZE
+                botIndex = i * PAGE_SIZE
 
-        # Extract entries and relevant fields
-        raw_resources = response["entry"]
+            if topIndex != None and topIndex >= len(matched_resources):
+                matched_resources.extend(
+                    getPage(internal_page_id_list.pop(), True)["page"]
+                )
 
-        matched_resources = matched_resources + matchResourcesWithConsents(
-            resources=raw_resources,
-            consents=all_consents,
-            resource_config=RESOURCE_PATHS[resource],
-            provision_config=prov_conf,
-        )
+            curr_page, next_page_id = fhirBundlifyList(
+                list=matched_resources[botIndex:topIndex],
+                total=len(matched_resources),
+                uid=next_page_id,
+                page_size=PAGE_SIZE,
+                page_store_time=PAGE_STORE_TIME,
+                facade_url=f"{request.url_root}fhir/",
+                lastPage=(i + 1 == num_of_pages),
+            )
+            page_id_list.append(curr_page["id"])
 
-    # Trigger internal paging for remaining Elements
-    uid = shortuuid.encode(uuid.uuid4())
-    storePage({"page": matched_resources}, uid)
-    internal_page_id_list.append(uid)
-    length_sum += len(matched_resources)
+            storePage(curr_page, curr_page["id"], PAGE_STORE_TIME)
 
-    # Page results and return first page
-    num_of_pages = math.ceil(length_sum / PAGE_SIZE)
-    next_page_id = ""
-    matched_resources = getPage(internal_page_id_list.pop(), True)["page"]
-    for i in range(num_of_pages):
-        if i + 1 == num_of_pages:
-            topIndex = None
-            botIndex = i * PAGE_SIZE
+        clearPages(PAGE_STORE_TIME)
+
+        if len(page_id_list) != 0:
+            return getPage(page_id_list[0])
         else:
-            topIndex = (i + 1) * PAGE_SIZE
-            botIndex = i * PAGE_SIZE
-
-        if topIndex != None and topIndex >= len(matched_resources):
-            matched_resources.extend(getPage(internal_page_id_list.pop(), True)["page"])
-
-        curr_page, next_page_id = fhirBundlifyList(
-            list=matched_resources[botIndex:topIndex],
-            total=len(matched_resources),
-            uid=next_page_id,
-            page_size=PAGE_SIZE,
-            page_store_time=PAGE_STORE_TIME,
-            facade_url=f"{request.url_root}fhir/",
-            lastPage=(i + 1 == num_of_pages),
-        )
-        page_id_list.append(curr_page["id"])
-
-        storePage(curr_page, curr_page["id"], PAGE_STORE_TIME)
-
-    clearPages(PAGE_STORE_TIME)
-
-    if len(page_id_list) != 0:
-        return getPage(page_id_list[0])
-    else:
-        emptySearchPage, nextUid = fhirBundlifyList(
-            list=[],
-            total=0,
-            page_size=PAGE_SIZE,
-            page_store_time=PAGE_STORE_TIME,
-            facade_url=f"{request.url_root}fhir/",
-            lastPage=True,
-        )
-        storePage(emptySearchPage, emptySearchPage["id"], PAGE_STORE_TIME)
-        return emptySearchPage
+            emptySearchPage, nextUid = fhirBundlifyList(
+                list=[],
+                total=0,
+                page_size=PAGE_SIZE,
+                page_store_time=PAGE_STORE_TIME,
+                facade_url=f"{request.url_root}fhir/",
+                lastPage=True,
+            )
+            storePage(emptySearchPage, emptySearchPage["id"], PAGE_STORE_TIME)
+            return emptySearchPage
 
 
 class FHIR_Facade_Server(Resource):

@@ -13,7 +13,7 @@
 | INTERNAL_PAGE_SIZE | 2000 | Number of loaded resources, before internal paging is used||
 | PAGING_STORE | LOCAL | Use local storage or MongoDb for paging | Valid values: LOCAL / MONGO |
 | MONGO_DB_URL | mongodb://host.docker.internal:27017 | MongoDB Connection String | |
-| LOG_LEVEL | INFO | Determines the amount of console output | Valid values: INFO / DEBUG |
+| LOG_LEVEL | INFO | Determines the amount of console output | Valid values: INFO / DEBUG / BENCHMARK |
 | BA_USER_NAME | | BasicAuth username if required for the connection to the fhir server | |
 | BA_PASSWORD | | BasicAuth password if required for the connection to the fhir server | |
 | RESOURCE_CONFIG | | Multiline yaml, analogue to the resource config file | |
@@ -21,6 +21,7 @@
 | SSL_CERT | | Certificate for https | |
 | SSL_KEY | | Key for https | |
 | GUNICORN_WORKERS | multiprocessing.cpu_count() * 2 + 1 | Number of Gunicorn Workers | |
+| PROCESSES_PER_WORKER | 1 | Number of processes spawned per request [BETA] | |
 | CONSENT_CACHE_TIME | 60 | Seconds till Consents are being refreshed | |
 
 

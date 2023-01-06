@@ -1,11 +1,13 @@
 from dateutil import parser
 from unittest import result
+from util.timingUtil import timeit
 import requests, os
 from requests.auth import HTTPBasicAuth
 
 LOG_LEVEL = os.environ["LOG_LEVEL"]
 
 
+@timeit
 def getAllConsents(SERVER_URL):
 
     # Get request for all consents
@@ -48,6 +50,7 @@ def getAllConsents(SERVER_URL):
     return filterConsents(raw_consents)
 
 
+@timeit
 def filterConsents(consents):
 
     filtered_consents = []
@@ -72,6 +75,7 @@ def filterConsents(consents):
     return filtered_consents
 
 
+@timeit
 def getProvisionTimeSet(consents, provision_config):
     provision_time_set = {}
     conf_prov_codes = provision_config["coding"]
@@ -122,6 +126,7 @@ def getProvisionTimeSet(consents, provision_config):
     return provision_time_set
 
 
+@timeit
 def matchResourcesWithConsents(resources, consents, resource_config, provision_config):
 
     if LOG_LEVEL == "DEBUG":
