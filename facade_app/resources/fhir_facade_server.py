@@ -71,7 +71,8 @@ def handleRequest(self, resource, search=""):
     PAGE_STORE_TIME = int(os.environ["PAGE_STORE_TIME"])
     INT_PAGE_SIZE = int(os.getenv("INTERNAL_PAGE_SIZE", 2000))
     CONSENT_CACHE_TIME = int(os.getenv("CONSENT_CACHE_TIME", 60))
-    PROCESSES_PER_WORKER = int(os.getenv("PROCESSES_PER_WORKER", "1"))
+    PROCESSES_PER_WORKER = int(os.getenv("PROCESSES_PER_WORKER", 1))
+    MP_CHUNK_SIZE = int(os.getenv("MP_CHUNK_SIZE", 50))
 
     # Initialize multiprocessing pool with specified number of processes
     mp = multiprocessing.get_context("spawn")
@@ -149,6 +150,7 @@ def handleRequest(self, resource, search=""):
                     provision_config=prov_conf,
                 ),
                 raw_resources,
+                chunksize=MP_CHUNK_SIZE,
             )
             for result in mapped_results:
                 matched_resources.extend(result)
@@ -176,7 +178,7 @@ def handleRequest(self, resource, search=""):
             # Extract entries and relevant fields
             raw_resources = response["entry"]
 
-            mapped_results = matched_resources + pool.map(
+            mapped_results = pool.map(
                 partial(
                     matchResourcesWithConsents,
                     consents=all_consents,
@@ -184,6 +186,7 @@ def handleRequest(self, resource, search=""):
                     provision_config=prov_conf,
                 ),
                 raw_resources,
+                chunksize=MP_CHUNK_SIZE,
             )
             for result in mapped_results:
                 matched_resources.extend(result)

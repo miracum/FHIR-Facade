@@ -20,9 +20,10 @@
 | PROVISION_CONFIG | | Multiline json, analogue to the provison config file | | 
 | SSL_CERT | | Certificate for https | |
 | SSL_KEY | | Key for https | |
-| GUNICORN_WORKERS | multiprocessing.cpu_count() * 2 + 1 | Number of Gunicorn Workers | |
-| PROCESSES_PER_WORKER | 1 | Number of processes spawned per request [BETA] | |
-| CONSENT_CACHE_TIME | 60 | Seconds till Consents are being refreshed | |
+| GUNICORN_WORKERS | 1 | Number of Gunicorn Workers | |
+| PROCESSES_PER_WORKER | 1 | Number of processes spawned per request | |
+| MP_CHUNK_SIZE | 50 | Number of resources handled per sub process | |
+| CONSENT_CACHE_TIME | 60 | Seconds till consents are being refreshed | |
 
 
 ### Standalone Deployment
