@@ -1,11 +1,13 @@
 from dateutil import parser
 from unittest import result
+from util.timingUtil import timeit
 import requests, os
 from requests.auth import HTTPBasicAuth
 
 LOG_LEVEL = os.environ["LOG_LEVEL"]
 
 
+@timeit
 def getAllConsents(SERVER_URL):
 
     # Get request for all consents
@@ -15,7 +17,10 @@ def getAllConsents(SERVER_URL):
     s = requests.session()
     auth = HTTPBasicAuth(os.getenv("BA_USER_NAME", ""), os.getenv("BA_PASSWORD", ""))
     params = {"_format": "application/fhir+json"}
-    headers = {"Accept": "application/fhir+json"}
+    headers = {
+        "Accept": "application/fhir+json",
+        "Content-Type": "application/x-www-form-urlencoded",
+    }
     response = s.post(
         SERVER_URL + "Consent/_search",
         auth=auth,
@@ -48,6 +53,7 @@ def getAllConsents(SERVER_URL):
     return filterConsents(raw_consents)
 
 
+@timeit
 def filterConsents(consents):
 
     filtered_consents = []
@@ -72,6 +78,7 @@ def filterConsents(consents):
     return filtered_consents
 
 
+@timeit
 def getProvisionTimeSet(consents, provision_config):
     provision_time_set = {}
     conf_prov_codes = provision_config["coding"]
@@ -122,6 +129,7 @@ def getProvisionTimeSet(consents, provision_config):
     return provision_time_set
 
 
+@timeit
 def matchResourcesWithConsents(resources, consents, resource_config, provision_config):
 
     if LOG_LEVEL == "DEBUG":
@@ -132,6 +140,9 @@ def matchResourcesWithConsents(resources, consents, resource_config, provision_c
     provision_time_set = getProvisionTimeSet(consents, provision_config)
     if LOG_LEVEL == "DEBUG":
         print(f"provision_time_set:{provision_time_set}")
+
+    if type(resources) != list:
+        resources = [resources]
 
     consented_resources = []
 
