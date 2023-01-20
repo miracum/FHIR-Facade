@@ -17,7 +17,10 @@ def getAllConsents(SERVER_URL):
     s = requests.session()
     auth = HTTPBasicAuth(os.getenv("BA_USER_NAME", ""), os.getenv("BA_PASSWORD", ""))
     params = {"_format": "application/fhir+json"}
-    headers = {"Accept": "application/fhir+json"}
+    headers = {
+        "Accept": "application/fhir+json",
+        "Content-Type": "application/x-www-form-urlencoded",
+    }
     response = s.post(
         SERVER_URL + "Consent/_search",
         auth=auth,
@@ -137,6 +140,9 @@ def matchResourcesWithConsents(resources, consents, resource_config, provision_c
     provision_time_set = getProvisionTimeSet(consents, provision_config)
     if LOG_LEVEL == "DEBUG":
         print(f"provision_time_set:{provision_time_set}")
+
+    if type(resources) != list:
+        resources = [resources]
 
     consented_resources = []
 

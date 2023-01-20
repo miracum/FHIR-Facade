@@ -1,4 +1,4 @@
-import yaml, json, requests, os, math, time, multiprocessing
+import yaml, json, requests, os, math, time, multiprocessing, logging
 from requests.auth import HTTPBasicAuth
 from functools import partial
 import uuid, shortuuid
@@ -25,6 +25,10 @@ else:
 
 RESOURCE_PATHS = resource_config["Resources"]
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+
+if LOG_LEVEL == "DEBUG":
+    logger = multiprocessing.log_to_stderr()
+    logger.setLevel(multiprocessing.SUBDEBUG)
 
 
 def handleRequest(self, resource, search=""):
@@ -80,7 +84,10 @@ def handleRequest(self, resource, search=""):
         length_sum = 0
 
         params["_format"] = "application/fhir+json"
-        headers = {"Accept": "application/fhir+json"}
+        headers = {
+            "Accept": "application/fhir+json",
+            "Content-Type": "application/x-www-form-urlencoded",
+        }
 
         # refreshAllConsents
         [all_consents, timeStamp] = loadConsents()
@@ -136,13 +143,12 @@ def handleRequest(self, resource, search=""):
             raw_resources = response["entry"]
             mapped_results = pool.map(
                 partial(
-                    matchResourcesWithConsents(
-                        consents=all_consents,
-                        resource_config=RESOURCE_PATHS[resource],
-                        provision_config=prov_conf,
-                    ),
-                    resources=raw_resources,
-                )
+                    matchResourcesWithConsents,
+                    consents=all_consents,
+                    resource_config=RESOURCE_PATHS[resource],
+                    provision_config=prov_conf,
+                ),
+                raw_resources,
             )
             for result in mapped_results:
                 matched_resources.extend(result)
@@ -172,13 +178,12 @@ def handleRequest(self, resource, search=""):
 
             mapped_results = matched_resources + pool.map(
                 partial(
-                    matchResourcesWithConsents(
-                        consents=all_consents,
-                        resource_config=RESOURCE_PATHS[resource],
-                        provision_config=prov_conf,
-                    ),
-                    resources=raw_resources,
-                )
+                    matchResourcesWithConsents,
+                    consents=all_consents,
+                    resource_config=RESOURCE_PATHS[resource],
+                    provision_config=prov_conf,
+                ),
+                raw_resources,
             )
             for result in mapped_results:
                 matched_resources.extend(result)
