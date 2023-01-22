@@ -5,7 +5,11 @@ import uuid, shortuuid
 import flask
 from flask import request, Response
 from flask_restful import Resource
-from util.consentAndResourceUtil import getAllConsents, matchResourcesWithConsents
+from util.consentAndResourceUtil import (
+    getAllConsents,
+    matchResourcesWithConsents,
+    getProvisionTimeSet,
+)
 from util.bundleUtil import fhirBundlifyList
 from util.pagingStoreController import (
     storePage,
@@ -90,17 +94,6 @@ def handleRequest(self, resource, search=""):
             "Content-Type": "application/x-www-form-urlencoded",
         }
 
-        # refreshAllConsents
-        [all_consents, timeStamp] = loadConsents()
-        if (timeStamp + CONSENT_CACHE_TIME) < time.time() or len(all_consents) == 0:
-            all_consents = getAllConsents(SERVER_URL)
-            storeConsents([all_consents, time.time()])
-
-            if LOG_LEVEL == "INFO":
-                print(f"refreshed consents at {int(time.time())}seconds")
-        if LOG_LEVEL == "DEBUG":
-            print(f"all consents: {all_consents}")
-
         # get initial resources from fhir server
         s = requests.session()
         auth = HTTPBasicAuth(
@@ -131,6 +124,21 @@ def handleRequest(self, resource, search=""):
                     "no provision_config provided, defaulting to config/general_provision_config.json"
                 )
 
+        # refreshAllConsents
+        [provision_time_set, timeStamp] = loadConsents()
+        if (timeStamp + CONSENT_CACHE_TIME) < time.time() or len(
+            provision_time_set
+        ) == 0:
+            provision_time_set = getProvisionTimeSet(
+                getAllConsents(SERVER_URL), prov_conf
+            )
+            storeConsents([provision_time_set, time.time()])
+
+            if LOG_LEVEL == "INFO":
+                print(f"refreshed consents at {int(time.time())}seconds")
+        if LOG_LEVEL == "DEBUG":
+            print(f"all consents: {provision_time_set}")
+
         response = s.post(
             SERVER_URL + resource + "/_search",
             auth=auth,
@@ -145,9 +153,8 @@ def handleRequest(self, resource, search=""):
             mapped_results = pool.map(
                 partial(
                     matchResourcesWithConsents,
-                    consents=all_consents,
+                    provision_time_set=provision_time_set,
                     resource_config=RESOURCE_PATHS[resource],
-                    provision_config=prov_conf,
                 ),
                 raw_resources,
                 chunksize=MP_CHUNK_SIZE,
@@ -181,9 +188,8 @@ def handleRequest(self, resource, search=""):
             mapped_results = pool.map(
                 partial(
                     matchResourcesWithConsents,
-                    consents=all_consents,
+                    provision_time_set=provision_time_set,
                     resource_config=RESOURCE_PATHS[resource],
-                    provision_config=prov_conf,
                 ),
                 raw_resources,
                 chunksize=MP_CHUNK_SIZE,
