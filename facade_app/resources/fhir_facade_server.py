@@ -1,6 +1,7 @@
 import yaml, json, requests, os, math, time, multiprocessing, logging
 from requests.auth import HTTPBasicAuth
 from functools import partial
+from resources.fhir_facade_passthrough import passthrough_handle_request
 import uuid, shortuuid
 import flask
 from flask import request, Response
@@ -23,6 +24,14 @@ else:
     with open("../config/resource_config.yml") as cfgfile:
         resource_config = yaml.safe_load(cfgfile)
 
+temp = os.getenv("PASSTHROUGH_CONFIG", "")
+if temp != "":
+    pass_config = yaml.safe_load(temp)
+else:
+    with open("../config/passthrough_config.yml") as cfgfile:
+        pass_config = yaml.safe_load(cfgfile)
+
+PASS_RESOURCES = pass_config["Resources"]
 RESOURCE_PATHS = resource_config["Resources"]
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
@@ -43,6 +52,9 @@ def handleRequest(self, resource, search=""):
     # Paging request
     if resource == "Page" and "__page-id" in params:
         return getPage(params["__page-id"])
+
+    if resource in PASS_RESOURCES:
+        return passthrough_handle_request(self, False)
 
     # Return error code if request is invalid
     if search != "_search":

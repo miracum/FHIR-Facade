@@ -1,0 +1,8 @@
+# Add all endpoints and resources that are supposed to be passed through without consent checks
+# Endpoints that use the same /fhir/ base url as resources have to be added in the resources section
+# E.g. /fhir/metadata
+URLs:
+  - "/metadata"
+  - "/test/echo"
+Resources:
+  - "metadata"

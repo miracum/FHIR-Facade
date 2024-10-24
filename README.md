@@ -17,6 +17,7 @@
 | BA_USER_NAME | | BasicAuth username if required for the connection to the fhir server | |
 | BA_PASSWORD | | BasicAuth password if required for the connection to the fhir server | |
 | RESOURCE_CONFIG | | Multiline yaml, analogue to the resource config file | |
+| PASSTHROUGH_CONFIG | | Multiline yaml, analogue to the passthrough config file | |
 | PROVISION_CONFIG | | Multiline json, analogue to the provison config file | | 
 | SSL_CERT | | Certificate for https | |
 | SSL_KEY | | Key for https | |
@@ -77,7 +78,7 @@ Resources:
 ### Provision Configuration
 Provisions can be configured either before container startup in the config/general_provison_config.json or during runtime:
 Pass a List of provision codes in a json format based on the [MII Kerndatensatz](https://simplifier.net/packages/de.medizininformatikinitiative.kerndatensatz.consent/1.0.0-ballot1).
-Every Consent is required to have ALL provided provisions as a subset of its provisions. This structure is required for the preconfiguration as well as the parameter version.
+Every Patient is required to have ALL provided provisions as a subset of its provisions. This structure is required for the preconfiguration as well as the parameter version.
 
 #### Example:
 ```
@@ -93,4 +94,16 @@ Every Consent is required to have ALL provided provisions as a subset of its pro
         }
     ]   
 }
+```
+
+### Passthrough Configuration:
+Some Applications might require you to additionally access proprietary endpoints in the underlying FHIR-Server. Similar to the previous configuration this can be achieved through a yaml configuration, that can be provided via environment variable, as well as the passthrough_config.yml file. You only need to provide the URL in a example route "fhir.server.url:portURL". If the url contains the usual /fhir/ base it has to be supplied under Resources, where "fhir.server.url:port/fhir/Resource".
+
+#### Example:
+```
+URLs:
+  - "/metadata"
+  - "/test/echo"
+Resources:
+  - "metadata"
 ```
