@@ -92,22 +92,14 @@ def getProvisionTimeSet(consents, provision_config):
         ]
 
         # check whether configured provisions are a subset of the consent provisions
-        if not (
-            False
+        if True in [
+            True
             in [
-                True
-                in [
-                    (
-                        all(
-                            prov.get(key, None) == val
-                            for key, val in config_code.items()
-                        )
-                    )
-                    for prov in consent_provision_list
-                ]
-                for config_code in conf_prov_codes
+                (all(prov.get(key, None) == val for key, val in config_code.items()))
+                for prov in consent_provision_list
             ]
-        ):
+            for config_code in conf_prov_codes
+        ]:
             for provision in consent["provision"]["provision"]:
 
                 provision_coding = provision["code"][0]["coding"][0]
