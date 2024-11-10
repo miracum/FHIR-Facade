@@ -86,23 +86,13 @@ def getProvisionTimeSet(consents, provision_config):
     for consent in consents:
 
         patient = consent["patient"]["reference"]
-        consent_provision_list = [
-            provision["code"][0]["coding"][0]
-            for provision in consent["provision"]["provision"]
-        ]
 
-        # check whether configured provisions are a subset of the consent provisions
-        if True in [
-            True
-            in [
-                (all(prov.get(key, None) == val for key, val in config_code.items()))
-                for prov in consent_provision_list
-            ]
-            for config_code in conf_prov_codes
-        ]:
-            for provision in consent["provision"]["provision"]:
+        for provision in consent["provision"]["provision"]:
 
-                provision_coding = provision["code"][0]["coding"][0]
+            provision_codings = provision["code"][0]["coding"]
+            for coding in provision_codings:
+                if coding not in conf_prov_codes:
+                    continue
 
                 try:
                     temp = provision_time_set[patient]
@@ -110,7 +100,7 @@ def getProvisionTimeSet(consents, provision_config):
                     temp = []
                 updated_provisions = temp + [
                     {
-                        "code": provision_coding["code"],
+                        "code": coding,
                         "type": provision["type"],
                         "period": provision["period"],
                     }
@@ -153,6 +143,7 @@ def matchResourcesWithConsents(resources, consents, resource_config, provision_c
         date = parser.parse(date)
 
         if subject in provision_time_set:
+
             for provision in provision_time_set[subject]:
 
                 start = parser.parse(provision["period"]["start"])
@@ -171,6 +162,16 @@ def matchResourcesWithConsents(resources, consents, resource_config, provision_c
                     ):
                         is_consented = False
                         break
+
+            for prov_code in provision_config["coding"]:
+                provision_exists = False
+                for provision in provision_time_set[subject]:
+                    if provision["code"] == prov_code:
+                        provision_exists = True
+                        break
+                if not provision_exists:
+                    is_consented = False
+                    break
 
         if is_consented:
             consented_resources.append(res)

@@ -6,3 +6,5 @@ URLs:
   - "/test/echo"
 Resources:
   - "metadata"
+  - "Patient"
+  - "Consent"

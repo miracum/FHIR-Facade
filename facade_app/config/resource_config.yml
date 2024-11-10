@@ -12,9 +12,6 @@ Resources:
   Procedure:
     Date: "performedPeriod/"
     Subject: "subject/reference"
-  Patient:
-    Date: "meta/lastUpdated"
-    Subject: "id"
-  Consent: 
-    Date: "dateTime"
-    Subject: "patient/reference"
+  Specimen:
+    Date: "collection/collectedDateTime"
+    Subject: "subject/reference"

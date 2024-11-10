@@ -99,6 +99,8 @@ Every Patient is required to have ALL provided provisions as a subset of its pro
 ### Passthrough Configuration:
 Some Applications might require you to additionally access proprietary endpoints in the underlying FHIR-Server. Similar to the previous configuration this can be achieved through a yaml configuration, that can be provided via environment variable, as well as the passthrough_config.yml file. You only need to provide the URL in a example route "fhir.server.url:portURL". If the url contains the usual /fhir/ base it has to be supplied under Resources, where "fhir.server.url:port/fhir/Resource".
 
+Patient and Consent resources get passed through by default.
+
 #### Example:
 ```
 URLs:
@@ -106,4 +108,6 @@ URLs:
   - "/test/echo"
 Resources:
   - "metadata"
+  - "Patient"
+  - "Consent"
 ```
