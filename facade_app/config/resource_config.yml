@@ -1,17 +1,28 @@
 #Add all resources that are supposed to be limited by consent status
 #This must include a 'Date' Attribute with a relative Path from the Resource to a necessary Date field including its name
 #As well as a similar 'Subject' field with the relative Path to a necessary Patient Identifier
+#The 'EvaluationStrategy' can be either 'date' or 'simple', depending on whether the valid period of the configured provisions should be evaluated
+#In the case of 'simple', the valid period of the provisions is not evaluated and the consent is only checked for existence
+#Therefor the date field can be left empty
 #Paths are represented as follows: path/to/the/subject/field
 Resources:
   Observation:
+    EvaluationStrategy: "date"
     Date: "issued"
     Subject: "subject/reference"
   Encounter:
+    EvaluationStrategy: "date"
     Date: "period/start"
     Subject: "subject/reference"
   Procedure:
+    EvaluationStrategy: "date"
     Date: "performedPeriod/"
     Subject: "subject/reference"
   Specimen:
+    EvaluationStrategy: "date"
     Date: "collection/collectedDateTime"
     Subject: "subject/reference"
+  Patient:
+    EvaluationStrategy: "simple"
+    Date: ""
+    Subject: "id"

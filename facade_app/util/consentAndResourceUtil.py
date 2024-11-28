@@ -136,32 +136,43 @@ def matchResourcesWithConsents(resources, consents, resource_config, provision_c
         subject = res["resource"]
         for path in resource_config["Subject"].split("/"):
             subject = subject[path]
+        if (
+            not subject.startswith("Patient/")
+            and len(resource_config["Subject"].split("/")) == 1
+        ):
+            subject = "Patient/" + subject
 
-        date = res["resource"]
-        for path in resource_config["Date"].split("/"):
-            date = date[path]
-        date = parser.parse(date)
+        if resource_config["EvaluationStrategy"] == "date":
+            date = res["resource"]
+            for path in resource_config["Date"].split("/"):
+                date = date[path]
+            date = parser.parse(date)
 
         if subject in provision_time_set:
 
-            for provision in provision_time_set[subject]:
+            if resource_config["EvaluationStrategy"] == "date":
 
-                start = parser.parse(provision["period"]["start"])
-                end = parser.parse(provision["period"]["end"])
+                for provision in provision_time_set[subject]:
 
-                if provision["type"] == "permit":
-                    if (
-                        date.timestamp() >= start.timestamp()
-                        and date.timestamp() <= end.timestamp()
-                    ):
-                        is_consented = True
-                else:
-                    if (
-                        date.timestamp() >= start.timestamp()
-                        and date.timestamp() <= end.timestamp()
-                    ):
-                        is_consented = False
-                        break
+                    start = parser.parse(provision["period"]["start"])
+                    end = parser.parse(provision["period"]["end"])
+
+                    if provision["type"] == "permit":
+                        if (
+                            date.timestamp() >= start.timestamp()
+                            and date.timestamp() <= end.timestamp()
+                        ):
+                            is_consented = True
+                    else:
+                        if (
+                            date.timestamp() >= start.timestamp()
+                            and date.timestamp() <= end.timestamp()
+                        ):
+                            is_consented = False
+                            break
+
+            if resource_config["EvaluationStrategy"] == "simple":
+                is_consented = True
 
             for prov_code in provision_config["coding"]:
                 provision_exists = False

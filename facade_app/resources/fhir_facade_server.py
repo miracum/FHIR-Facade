@@ -70,8 +70,8 @@ def handleRequest(self, resource, search=""):
     # Check if resource has been configured properly
     if (
         RESOURCE_PATHS[resource]["Date"] == ""
-        or RESOURCE_PATHS[resource]["Subject"] == ""
-    ):
+        and RESOURCE_PATHS[resource]["EvaluationStrategy"] != "simple"
+    ) or RESOURCE_PATHS[resource]["Subject"] == "":
         return (
             f"The requested resource has not been configured. Please add the necessary configuration. Or if you dont require consent for the requested resources, use the fhir-server endpoint ({SERVER_URL}) directly.",
             403,

@@ -68,11 +68,25 @@ All Resources that are supposed to be accessed via the facade have to be configu
 ```
 Resources:
   Observation:
+    EvaluationStrategy: "date"
     Date: "issued"
     Subject: "subject/reference"
   Encounter:
+    EvaluationStrategy: "date"
     Date: "period/start"
     Subject: "subject/reference"
+  Procedure:
+    EvaluationStrategy: "date"
+    Date: "performedPeriod/"
+    Subject: "subject/reference"
+  Specimen:
+    EvaluationStrategy: "date"
+    Date: "collection/collectedDateTime"
+    Subject: "subject/reference"
+  Patient:
+    EvaluationStrategy: "simple"
+    Date: ""
+    Subject: "id"
 ```
 
 ### Provision Configuration
