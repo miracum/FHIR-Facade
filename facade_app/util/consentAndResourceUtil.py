@@ -176,11 +176,13 @@ def matchResourcesWithConsents(resources, consents, resource_config, provision_c
 
             for prov_code in provision_config["coding"]:
                 provision_exists = False
+                provision_permit = False
                 for provision in provision_time_set[subject]:
                     if provision["code"] == prov_code:
                         provision_exists = True
-                        break
-                if not provision_exists:
+                    if provision["code"] == prov_code and provision["type"] == "permit":
+                        provision_permit = True
+                if not provision_exists or not provision_permit:
                     is_consented = False
                     break
 
