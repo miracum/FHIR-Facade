@@ -56,10 +56,6 @@ def handleRequest(self, resource, search=""):
     if resource in PASS_RESOURCES:
         return passthrough_handle_request(self, False)
 
-    # Return error code if request is invalid
-    if search != "_search":
-        return "Syntax error. Use the appropriate fhir-post-search syntax: .../fhir/type/_search"
-
     # Check if resource has been configured
     if resource not in RESOURCE_PATHS:
         return (
@@ -143,17 +139,41 @@ def handleRequest(self, resource, search=""):
                     "no provision_config provided, defaulting to config/general_provision_config.json"
                 )
 
-        response = s.post(
-            SERVER_URL + resource + "/_search",
-            auth=auth,
-            headers=headers,
-            params=data,
-            verify=False,
-        ).json()
-        if LOG_LEVEL == "DEBUG":
-            print(f"initial response: {response}")
-        if "entry" in response.keys():
-            raw_resources = response["entry"]
+        if search == "_search":
+            response = s.post(
+                SERVER_URL + resource + "/_search",
+                auth=auth,
+                headers=headers,
+                params=data,
+                verify=False,
+            ).json()
+            if LOG_LEVEL == "DEBUG":
+                print(f"initial response: {response}")
+            if "entry" in response.keys():
+                raw_resources = response["entry"]
+                mapped_results = pool.map(
+                    partial(
+                        matchResourcesWithConsents,
+                        consents=all_consents,
+                        resource_config=RESOURCE_PATHS[resource],
+                        provision_config=prov_conf,
+                    ),
+                    raw_resources,
+                    chunksize=MP_CHUNK_SIZE,
+                )
+                for result in mapped_results:
+                    matched_resources.extend(result)
+        else:
+            response = s.get(
+                SERVER_URL + resource + "/" + search,
+                auth=auth,
+                headers=headers,
+                params=data,
+                verify=False,
+            ).json()
+            if LOG_LEVEL == "DEBUG":
+                print(f"initial response: {response}")
+            raw_resources = [{"resource": response}]
             mapped_results = pool.map(
                 partial(
                     matchResourcesWithConsents,
@@ -168,7 +188,9 @@ def handleRequest(self, resource, search=""):
                 matched_resources.extend(result)
 
         # Iterate over potential paged responses
-        while "next" in [link["relation"] for link in response["link"]]:
+        while hasattr(response, "link") and "next" in [
+            link["relation"] for link in response["link"]
+        ]:
 
             # If there are to many resources matched, trigger internal paging
             if len(matched_resources) >= INT_PAGE_SIZE:
@@ -257,8 +279,8 @@ def handleRequest(self, resource, search=""):
 
 
 class FHIR_Facade_Server(Resource):
-    def get(self, resource):
-        return handleRequest(self, resource, "_search")
+    def get(self, resource, search="_search"):
+        return handleRequest(self, resource, search)
 
     def post(self, resource, search="False"):
         return handleRequest(self, resource, search)
