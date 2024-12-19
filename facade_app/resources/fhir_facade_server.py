@@ -264,7 +264,10 @@ def handleRequest(self, resource, search=""):
         clearPages(PAGE_STORE_TIME)
 
         if len(page_id_list) != 0:
-            return getPage(page_id_list[0])
+            page = getPage(page_id_list[0])
+            if search != "_search":
+                page = page["entry"][0]["resource"]
+            return page
         else:
             emptySearchPage, nextUid = fhirBundlifyList(
                 list=[],
