@@ -5,6 +5,8 @@ import requests, os
 from requests.auth import HTTPBasicAuth
 
 LOG_LEVEL = os.environ["LOG_LEVEL"]
+BA_USER_NAME = os.getenv("BA_USER_NAME", "")
+BA_PASSWORD = os.getenv("BA_PASSWORD", "")
 
 
 @timeit
@@ -15,7 +17,15 @@ def getAllConsents(SERVER_URL):
 
     # Initial request and processing
     s = requests.session()
-    auth = HTTPBasicAuth(os.getenv("BA_USER_NAME", ""), os.getenv("BA_PASSWORD", ""))
+    auth = HTTPBasicAuth(BA_USER_NAME, BA_PASSWORD)
+    if BA_USER_NAME == "":
+        print(
+            "No Basic Auth Username provided. Please provide Basic Auth credentials if required."
+        )
+    if BA_PASSWORD == "":
+        print(
+            "No Basic Auth Password provided. Please provide Basic Auth credentials if required."
+        )
     params = {"_format": "application/fhir+json"}
     headers = {
         "Accept": "application/fhir+json",

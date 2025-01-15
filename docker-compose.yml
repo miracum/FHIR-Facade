@@ -6,7 +6,25 @@ services:
     restart: unless-stopped
     ports: 
       - ${FACADE_PORT:-8082}:${FACADE_PORT:-8082}
+    env_file:
+      - .env
     environment:
+      FHIR_SERVER_URL: ${FHIR_SERVER_URL}
+      FACADE_PORT: ${FACADE_PORT:-8082}
+      PAGE_SIZE: ${PAGE_SIZE:-50}
+      PAGE_STORE_TIME: ${PAGE_STORE_TIME:-1200}
+      PAGING_STORE: ${PAGING_STORE:-LOCAL}
+      MONGO_DB_URL: ${MONGO_DB_URL:-mongodb://host.docker.internal:27017}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      BA_USER_NAME: ${BA_USER_NAME}
+      BA_PASSWORD: ${BA_PASSWORD}
+      SSL_CERT: ${SSL_CERT}
+      SSL_KEY: ${SSL_KEY}
+      GUNICORN_WORKERS: ${GUNICORN_WORKERS:-1}
+      PROCESSES_PER_WORKER: ${PROCESSES_PER_WORKER:-1}
+      MP_CHUNK_SIZE: ${MP_CHUNK_SIZE:-50}
+      INTERNAL_PAGE_SIZE: ${INTERNAL_PAGE_SIZE:-2000}
+      CONSENT_CACHE_TIME: ${CONSENT_CACHE_TIME:-60}
       RESOURCE_CONFIG: | 
         Resources:
           PlaceholderResource:
