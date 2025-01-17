@@ -9,7 +9,7 @@ services:
     env_file:
       - .env
     environment:
-      FHIR_SERVER_URL: ${FHIR_SERVER_URL}
+      FHIR_SERVER_URL: ${FHIR_SERVER_URL:-http://host.docker.internal:8080/fhir/}
       FACADE_PORT: ${FACADE_PORT:-8082}
       PAGE_SIZE: ${PAGE_SIZE:-50}
       PAGE_STORE_TIME: ${PAGE_STORE_TIME:-1200}
