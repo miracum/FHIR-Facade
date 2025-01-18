@@ -125,3 +125,9 @@ Resources:
   - "Patient"
   - "Consent"
 ```
+
+#### Known Issues:
+| Issue  | Error Message | Solution |
+| ------------- | ------------- | ------------- | 
+| | | |
+| | | |
