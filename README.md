@@ -7,7 +7,7 @@
 | Variable                      | Default                       | Function                      | Comment                       |
 |-------------------------------|:-----------------------------:|:-----------------------------:|:-----------------------------:|
 | FACADE_PORT | 8082 | Port on which the Fhir-Facade is available | |
-| FHIR_SERVER_URL | http://host.docker.internal:8080/fhir/   | |  |
+| FHIR_SERVER_URL | http://host.docker.internal:8080/fhir/ | Underlying FHIR server containing FHIR resources |  |
 | PAGE_SIZE | 50 | Number of entries per result page | |
 | PAGE_STORE_TIME | 1200 | Seconds after which queried pages are discarded | |
 | INTERNAL_PAGE_SIZE | 2000 | Number of loaded resources, before internal paging is used||
