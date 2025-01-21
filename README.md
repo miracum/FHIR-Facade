@@ -16,9 +16,9 @@
 | LOG_LEVEL | INFO | Determines the amount of console output | Valid values: INFO / DEBUG / BENCHMARK |
 | BA_USER_NAME | | BasicAuth username if required for the connection to the fhir server | |
 | BA_PASSWORD | | BasicAuth password if required for the connection to the fhir server | |
-| RESOURCE_CONFIG | | Multiline yaml, analogue to the resource config file | |
-| PASSTHROUGH_CONFIG | | Multiline yaml, analogue to the passthrough config file | |
-| PROVISION_CONFIG | | Multiline json, analogue to the provison config file | | 
+| RESOURCE_CONFIG | | Multiline yaml, determines the relevant fhir paths to patient reference and date field | |
+| PASSTHROUGH_CONFIG | | Multiline yaml, determines which resources and URLs are passed through without consent check | |
+| PROVISION_CONFIG | | Multiline json, determines which consent provisions are required | | 
 | SSL_CERT | | Certificate for https | |
 | SSL_KEY | | Key for https | |
 | GUNICORN_WORKERS | 1 | Number of Gunicorn Workers | |
